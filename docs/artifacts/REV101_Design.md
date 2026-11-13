@@ -11,10 +11,10 @@
 - **対象**: `docs/artifacts/SW205_ソフトウェアアーキテクチャ設計書.md`（v0.1）、`docs/artifacts/TM101_トレーサビリティマトリクス.md` の設計ユニット欄、承認済み SWP6 v1.0 の第2.2節と TC-050 と TC-063 への加筆
 - **入力**: 承認済み SW105 v1.1、承認済み SWP6 v1.0、`docs/process/last_phase_summary.md`
 - **指摘ID**: 本レビューの依頼とテンプレートに従い D001 から付番した。
-- **総合判定**: **REJECTED**
-- **根拠**: 未解消の High が 1 件。`dada_check.py` の終了コードは 0。High が Open のため、技能の判定規則では APPROVED にしない。
-- **件数**: 4 件（High 1 / Mid 3 / Low 0）。Open は 4 件。
-- **機械チェック**: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0。`python3 tools/dada_check.py all --summary`。`python` は未インストールのため `python3` を使った）。High と Mid と要確認は 0 件。転記する行は無い。
+- **総合判定**: **REJECTED**（再レビューで更新。初回も REJECTED）
+- **根拠**: D001 から D004 は Closed。新しい High の D005 が Open。再レビューの `dada_check.py` の終了コードは 0。未解消の High が 1 件のため APPROVED にしない。
+- **件数**: 5 件（High 2 / Mid 3 / Low 0）。Open は 1 件（D005）。Closed は 4 件。
+- **機械チェック**: 初回 `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0）。再レビューも同じ要約行、終了コード 0。`python3 tools/dada_check.py all --summary`。`python` は未インストールのため `python3` を使った。機械の High と Mid と要確認は 0 件。転記する行は無い。
 - **読みやすさ**: `STYLE-LINT: OK | file=docs/artifacts/SW205_ソフトウェアアーキテクチャ設計書.md | Mid=0 / 要確認=0`。比喩、ダッシュ繋ぎ、過剰な否定対比、主述のねじれ、110文字超の長文は指摘しない。
 
 ### 機械チェックから転記した指摘
@@ -83,31 +83,47 @@ High と Mid は 0 件。要確認は 0 件。転記する行は無い。
 | 項目 | 結果 | 根拠 |
 | :--- | :--- | :--- |
 | 全 REQ に UNIT がある | 合格 | 機械チェック。第8.3節と TM101 が一致 |
-| 自動の TC が実施できる | 不合格 | D001、D002。読み込みと、TC-037 の間隔と、TC-060 の直径の観測口 |
+| 自動の TC が実施できる | 不合格 | D001 と D002 は再レビューで Closed。D005 により TC-056 が設計どおりでは Pass にならない |
 | 手動の TC を AI が観測できる | 合格 | 第8.2節の手動一覧は SWP6 第3.3節と一致。Product Owner がテストを実施する前提にはしていない |
 | SWP6 の期待値を無断で変えていない | 合格 | 加筆は手段だけ。数値と不合格条件は変えていない |
 | 要求に対応しないユニットが無い | 合格 | UNIT-001 から UNIT-012 は第8.3節のいずれかに出る |
 | 循環依存が無い | 合格 | 機械チェック。図の矢印は本文の依存先と同じ向き |
 | 公開インターフェースがある | 合格 | 機械チェック。各 UNIT に引数、戻り値、失敗時の名前がある |
 | 境界の検証条件がある | 合格 | 各 UNIT の検証条件。時刻の数値は SW105 の内側 |
-| 重要な技術選定に ADR がある | 合格 | ADR-001 から ADR-007。ADR-002 の channel の中身は D001 |
+| 重要な技術選定に ADR がある | 合格 | ADR-001 から ADR-007。ADR-002 は再レビューで同梱 Chromium に変わっている |
 | 外部依存を注入できる | 合格 | clock、scheduler、audioPort、random01、dom を引数で渡す |
-| 異常系が SW105 と対応する | 合格 | 第7節は REQ-001 から REQ-007 の異常系を持つ。再オープンの失敗回復は D003 |
+| 異常系が SW105 と対応する | 合格 | 第7節は REQ-001 から REQ-007 の異常系を持つ。再オープンの失敗回復は D003 で確認し Closed |
 | 将来の拡張ポイント | 合格 | SW105 第6.3節は、対象外機能を足すとき Phase 1 へ戻す。本版の状態は第4.2節の表に閉じている |
 | スケルトンの残骸が無い | 合格 | 機械チェック |
 | 不自然な日本語が残っていない | 合格 | style_check は Mid 0、要確認 0 |
 
 | 指摘ID | 発生日 | 重要度 | 対象ドキュメント・箇所 | 指摘内容 | 修正提案 | 対応結果・修正内容 | ステータス |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| D001 | 2026-11-13 | High | SW205 / ADR-002、第8.2節。SWP6 / 第2.2節 | 【重要度: High】【ASDoQ: 2. 保守性（検証可能性）】画面の自動テストは Playwright の channel を chrome にする、と書いてある。理由は、同梱 Chromium が最新版 Google Chrome ではない、である。2026-11-13 に Playwright の拡張機能テストの公式手順（https://playwright.dev/docs/chrome-extensions）を読んだ。ブランド版の Google Chrome と Microsoft Edge は、拡張をコマンドラインから読み込むフラグを削除しており、公式手順は同梱 Chromium の persistent context を使う、と書いてある。Chrome の告知は、Chrome 137 のブランド版から `--load-extension` を削除し、Chromium と Chrome for Testing には残す、である。続く告知は、Chrome 139 のブランド版から `--disable-extensions-except` も削除する、である。設計の channel のまま公式手順のフラグで読むと、拡張が読み込めず、TC-001 以降の画面の自動テストが起動しない。ツールバーのアイコンをクリックする口も無い。`chrome.action.onClicked` は、ページ内の DOM をクリックしても発火しない。サービスワーカーのクリックを自動で起こす現状の手段は、CDP の `Extensions.triggerAction` である。入力の口が無い自動テストは実施できない。 | 第8.2節と ADR-002 に、拡張の読み込み手順を書く。最新版のブランド版 Chrome で自動テストするなら、削除済みのフラグではなく、CDP の `Extensions.loadUnpacked` で読む。フラグで読むなら、フラグが残っている Chrome for Testing か Playwright 同梱 Chromium を使い、SW105 が保証する最新版 Google Chrome では chrome://extensions の「パッケージ化されていない拡張機能を読み込む」で同じシナリオを確認する、と書く。アイコンのクリックは、CDP の `Extensions.triggerAction` で onClicked を起こす。SWP6 第2.2節の channel の文は、この手順に合わせる。期待値の数値は変えない。 | 2026-11-13 に生成担当が反映した。ADR-002 と第8.2節と SWP6 第2.2節は、channel を chrome のまま、最新版 Google Chrome を起動する。--load-extension と --disable-extensions-except は使わない。--enable-unsafe-extension-debugging を付ける。拡張は CDP の Extensions.loadUnpacked で読む。アイコンは CDP の Extensions.triggerAction で chrome.action.onClicked を起こす。期待値の数値は変えていない。 | 解決済 |
-| D002 | 2026-11-13 | Mid | SW205 / 第8.2節の観測口の表。SWP6 / TC-037、TC-060、第2.2節 | 【重要度: Mid】【ASDoQ: 3. 整合性（図表と本文の齟齬）】第8.2節の観測口の表は、TC-037 を node:test の純粋関数に置いている。SWP6 TC-037 の期待値は、表示が切り替わる間隔が 1秒で許容誤差 ±0.2秒であることと、120000、120001、60000 ミリ秒の表示である。間隔は、動いている画面で `#time` の textContent が変わる時刻の差で測る。formatRemaining の戻り値は、その間隔を測らない。同じ表は TC-060 を data-earth-diameter-px と timeVisible に置いている。同じ第8.2節の計測定義と SWP6 第2.2節は、直径を `#earth` の getBoundingClientRect() の幅と高さのうち大きい方で測る、と書いている。属性だけを合格にすると、計算値が 4 px 以下でも、画面上の写真が大きいときに TC-060 が Pass になる。REQ-007 の点は、画面上の直径が 4 px 以下であることである。 | TC-033 と、TC-038 の 1000、1001、119999、60001 と、TC-037 の3つの表示文字列は、node:test のままにする。TC-037 の間隔は、`#time` の textContent が変わる前後の印の差を観測口にする。TC-060 の合否は getBoundingClientRect() を主にし、data-earth-diameter-px はその矩形と同じ値であることの照合にする。期待値の数値は変えない。 | 2026-11-13 に生成担当が反映した。TC-033 と TC-038 と、TC-037 の 120000、120001、60000 ミリ秒の表示は node:test のままである。TC-037 の間隔は #time の textContent が変わる前後の印の差である。TC-060 の合否は getBoundingClientRect() である。data-earth-diameter-px は矩形と同じ値であることの照合に使う。SWP6 第2.2節も同じ手段に直した。期待値の数値は変えていない。 | 解決済 |
-| D003 | 2026-11-13 | Mid | SW205 / UNIT-001、第4.2節、ADR-006 | 【重要度: Mid】【ASDoQ: 3. 整合性（上位下位対応）】既にある専用ウィンドウは、chrome.windows.update で focused を true にする、と書いてある。失敗時は WindowOpenFailed を返す、と UNIT-001 にある。windows.update は、指定していない state を変えない。最小化されたウィンドウへ focused だけを渡すと、state は minimized のまま残る。公式の説明では、focused の true はウィンドウを前面へ出すことであり、state の minimized とは同時に指定できない。REQ-001 の前面化は、最小化されているとき state を normal にしてから focused を true にする。MV3 のサービスワーカーは、操作が無いと停止する。windows.onRemoved を最初の評価で登録していないと、停止中に閉じたイベントを受け取らず、chrome.storage.session の windowId が残る。残った id への update は失敗する。設計はその失敗を WindowOpenFailed で終わらせ、create へ進まない。閉じたあとのアイコンクリックで、専用ウィンドウが開かない。閉じたページが破棄され、残時間が消えること自体は、この指摘の対象外である。manifest の background に type の module が無い。製品コードは ES modules であり、type が無いサービスワーカーは起動しない。 | update の前に、その windowId のウィンドウが存在するかを見る。無い、または update が失敗したときは、session のキーを消して chrome.windows.create へ進む。WindowOpenFailed は、create が失敗したときだけ返す。ウィンドウがあり state が minimized のときは、state を normal にし、focused を true にする。onClicked と onRemoved は、window-launcher.js の最初の評価で登録する。manifest の background は、service_worker に加え type を module にする。URL を update に渡すと再読み込みになる、という既存の注意は残す。 | 2026-11-13 に生成担当が反映した。UNIT-001 は、ウィンドウが無いとき、または update が失敗したときに session のキーを消して create へ進む。WindowOpenFailed は create の失敗だけである。minimized のときは state を normal にしてから focused を true にする。onClicked と onRemoved は window-launcher.js の最初の評価で登録する。manifest の background の type は module である。url を update に渡さない注意は残した。 | 解決済 |
-| D004 | 2026-11-13 | Mid | SW205 / 第6節のストア掲載文、第8章 OQ-1 | 【重要度: Mid】【ASDoQ: 6. 規範適合性（制約適合性）】OQ-1 の推奨は、クレジット「VOICEVOX:四国めたん」を README の見出し「クレジット」に書く、である。2026-11-13 に利用規約を読んだ。ソフトウェア利用規約は、作成した音声を各音声ライブラリの規約へ委ね、ソフトウェアの無断再配布を禁止している。コアの README の四国めたんの項は、そのクレジットで生成音声を商用と非商用に利用できる、と書いている。音声ライブラリの規約は、アプリでは紹介画面など、少し探せばわかる場所への記載を求めている。第6節のストア掲載文は、クレジットを含まない1文に固定されている。推奨をそのまま採用すると、紹介画面にクレジットが無い。エンジンを同梱しないこと、wav だけを保存すること、人の声の録音ではないことは、規約と SW105 に合う。ページの場所と採用条件は、本ファイルの「OQ-1 の推奨回答」に書いた。 | OQ-1 の推奨文を「OQ-1 の推奨回答」の6条件に直す。ストア掲載文に「VOICEVOX:四国めたん」を足す。掲載文の既存の1文は残してよい。禁止名称と「公認」と「公式」は足さない。地球の写真の出典本文は、README のクレジット節だけに置く。Product Owner がこの条件で採用する。別のエンジンにする場合も、SW105 の3点は変えない。 | 2026-11-13 に生成担当が反映した。OQ-1 の推奨は、クレジット「VOICEVOX:四国めたん」を README の見出し「クレジット」とストア掲載文の2文目の両方に書く。掲載文の1文目は残した。エンジンと絵は同梱しない。OQ-2 の推奨は候補 B（加工前の AS17-148-22727）に変えた。地球の出典本文は README のクレジット節だけである。どちらも Product Owner の決定前であり、ファイルは置いていない。 | 解決済 |
+| D001 | 2026-11-13 | High | SW205 / ADR-002、第8.2節。SWP6 / 第2.2節 | 【重要度: High】【ASDoQ: 2. 保守性（検証可能性）】画面の自動テストは Playwright の channel を chrome にする、と書いてある。理由は、同梱 Chromium が最新版 Google Chrome ではない、である。2026-11-13 に Playwright の拡張機能テストの公式手順（https://playwright.dev/docs/chrome-extensions）を読んだ。ブランド版の Google Chrome と Microsoft Edge は、拡張をコマンドラインから読み込むフラグを削除しており、公式手順は同梱 Chromium の persistent context を使う、と書いてある。Chrome の告知は、Chrome 137 のブランド版から `--load-extension` を削除し、Chromium と Chrome for Testing には残す、である。続く告知は、Chrome 139 のブランド版から `--disable-extensions-except` も削除する、である。設計の channel のまま公式手順のフラグで読むと、拡張が読み込めず、TC-001 以降の画面の自動テストが起動しない。ツールバーのアイコンをクリックする口も無い。`chrome.action.onClicked` は、ページ内の DOM をクリックしても発火しない。サービスワーカーのクリックを自動で起こす現状の手段は、CDP の `Extensions.triggerAction` である。入力の口が無い自動テストは実施できない。 | 第8.2節と ADR-002 に、拡張の読み込み手順を書く。最新版のブランド版 Chrome で自動テストするなら、削除済みのフラグではなく、CDP の `Extensions.loadUnpacked` で読む。フラグで読むなら、フラグが残っている Chrome for Testing か Playwright 同梱 Chromium を使い、SW105 が保証する最新版 Google Chrome では chrome://extensions の「パッケージ化されていない拡張機能を読み込む」で同じシナリオを確認する、と書く。アイコンのクリックは、CDP の `Extensions.triggerAction` で onClicked を起こす。SWP6 第2.2節の channel の文は、この手順に合わせる。期待値の数値は変えない。 | 再レビューで ADR-002、第8.2節、SWP6 第2.2節を読んだ。自動テストは Playwright 同梱の Chromium で、channel は指定しない。persistent context で、--disable-extensions-except と --load-extension と --enable-unsafe-extension-debugging を付ける。アイコンは CDP の Extensions.triggerAction である。id はサービスワーカーの URL、targetId はタブターゲットである。手動の TC は最新版 Google Chrome で、chrome://extensions から読む。生成担当がこの欄に書いた「channel は chrome のまま、フラグは使わず loadUnpacked」は、保存済みの SW205 と一致しない。実ファイルは同梱 Chromium と --load-extension である。指摘の本体は解消している。期待値の数値は変えていない。 | Closed |
+| D002 | 2026-11-13 | Mid | SW205 / 第8.2節の観測口の表。SWP6 / TC-037、TC-060、第2.2節 | 【重要度: Mid】【ASDoQ: 3. 整合性（図表と本文の齟齬）】第8.2節の観測口の表は、TC-037 を node:test の純粋関数に置いている。SWP6 TC-037 の期待値は、表示が切り替わる間隔が 1秒で許容誤差 ±0.2秒であることと、120000、120001、60000 ミリ秒の表示である。間隔は、動いている画面で `#time` の textContent が変わる時刻の差で測る。formatRemaining の戻り値は、その間隔を測らない。同じ表は TC-060 を data-earth-diameter-px と timeVisible に置いている。同じ第8.2節の計測定義と SWP6 第2.2節は、直径を `#earth` の getBoundingClientRect() の幅と高さのうち大きい方で測る、と書いている。属性だけを合格にすると、計算値が 4 px 以下でも、画面上の写真が大きいときに TC-060 が Pass になる。REQ-007 の点は、画面上の直径が 4 px 以下であることである。 | TC-033 と、TC-038 の 1000、1001、119999、60001 と、TC-037 の3つの表示文字列は、node:test のままにする。TC-037 の間隔は、`#time` の textContent が変わる前後の印の差を観測口にする。TC-060 の合否は getBoundingClientRect() を主にし、data-earth-diameter-px はその矩形と同じ値であることの照合にする。期待値の数値は変えない。 | 再レビューで第8.2節の観測口の表と SWP6 第2.2節を読んだ。TC-037 の間隔は、#time の textContent が変わる前後の印の差である。TC-060 の合否は getBoundingClientRect() で、属性は矩形と同じ値であることの照合である。120000、120001、60000 ミリ秒の表示も同じ textContent を読む。node:test は TC-033 と TC-038 である。生成担当の欄にあった「3つの表示は node:test」は、保存済みの SW205 と違う。指摘の本体は解消している。期待値の数値は変えていない。 | Closed |
+| D003 | 2026-11-13 | Mid | SW205 / UNIT-001、第4.2節、ADR-006 | 【重要度: Mid】【ASDoQ: 3. 整合性（上位下位対応）】既にある専用ウィンドウは、chrome.windows.update で focused を true にする、と書いてある。失敗時は WindowOpenFailed を返す、と UNIT-001 にある。windows.update は、指定していない state を変えない。最小化されたウィンドウへ focused だけを渡すと、state は minimized のまま残る。公式の説明では、focused の true はウィンドウを前面へ出すことであり、state の minimized とは同時に指定できない。REQ-001 の前面化は、最小化されているとき state を normal にしてから focused を true にする。MV3 のサービスワーカーは、操作が無いと停止する。windows.onRemoved を最初の評価で登録していないと、停止中に閉じたイベントを受け取らず、chrome.storage.session の windowId が残る。残った id への update は失敗する。設計はその失敗を WindowOpenFailed で終わらせ、create へ進まない。閉じたあとのアイコンクリックで、専用ウィンドウが開かない。閉じたページが破棄され、残時間が消えること自体は、この指摘の対象外である。manifest の background に type の module が無い。製品コードは ES modules であり、type が無いサービスワーカーは起動しない。 | update の前に、その windowId のウィンドウが存在するかを見る。無い、または update が失敗したときは、session のキーを消して chrome.windows.create へ進む。WindowOpenFailed は、create が失敗したときだけ返す。ウィンドウがあり state が minimized のときは、state を normal にし、focused を true にする。onClicked と onRemoved は、window-launcher.js の最初の評価で登録する。manifest の background は、service_worker に加え type を module にする。URL を update に渡すと再読み込みになる、という既存の注意は残す。 | 再レビューで UNIT-001、第4.2節、ADR-006、起動のシーケンス図を読んだ。ウィンドウが無いとき、または update が失敗したときは、session のキーを消して create へ進む。WindowOpenFailed は create の失敗だけである。前面化は state を normal にし、focused を true にする。url は渡さない。onClicked と onRemoved は window-launcher.js の最初の評価で登録する。manifest の background の type は module である。指摘は解消している。 | Closed |
+| D004 | 2026-11-13 | Mid | SW205 / 第6節のストア掲載文、第8章 OQ-1 | 【重要度: Mid】【ASDoQ: 6. 規範適合性（制約適合性）】OQ-1 の推奨は、クレジット「VOICEVOX:四国めたん」を README の見出し「クレジット」に書く、である。2026-11-13 に利用規約を読んだ。ソフトウェア利用規約は、作成した音声を各音声ライブラリの規約へ委ね、ソフトウェアの無断再配布を禁止している。コアの README の四国めたんの項は、そのクレジットで生成音声を商用と非商用に利用できる、と書いている。音声ライブラリの規約は、アプリでは紹介画面など、少し探せばわかる場所への記載を求めている。第6節のストア掲載文は、クレジットを含まない1文に固定されている。推奨をそのまま採用すると、紹介画面にクレジットが無い。エンジンを同梱しないこと、wav だけを保存すること、人の声の録音ではないことは、規約と SW105 に合う。ページの場所と採用条件は、本ファイルの「OQ-1 の推奨回答」に書いた。 | OQ-1 の推奨文を「OQ-1 の推奨回答」の6条件に直す。ストア掲載文に「VOICEVOX:四国めたん」を足す。掲載文の既存の1文は残してよい。禁止名称と「公認」と「公式」は足さない。地球の写真の出典本文は、README のクレジット節だけに置く。Product Owner がこの条件で採用する。別のエンジンにする場合も、SW105 の3点は変えない。 | 再レビューで第6節と第8章を読んだ。Product Owner マサは 2026-11-13 に、四国めたん（ノーマル）を決定した。クレジット「VOICEVOX:四国めたん」は README の見出し「クレジット」と、ストア掲載文の2文目にある。1文目は残っている。エンジンとキャラクターの絵は同梱しない。指摘の本体は解消している。地球の出典を SOURCES.md にも書く件は、この指摘の範囲外であり、D005 で判断する。 | Closed |
 
-レビュー完了: 指摘 4件（High: 1 / Mid: 3 / Low: 0）→ 本ファイルに記録済み。
+初回レビュー完了: 指摘 4件（High: 1 / Mid: 3 / Low: 0）。当時の判定は REJECTED。
+
+## 再レビュー（2026-11-13）
+
+対象は、Open だった D001 から D004 と、その修正で変わった ADR-002、第4.2節、第6節、第8.2節、第8章、および SWP6 第2.2節である。SW205、TM101、SWP6 は編集していない。新しいユニット ID は無い。
+
+Product Owner マサの決定は、第8章に反映されている。OQ-1 は四国めたん（ノーマル）で、クレジットは README の見出し「クレジット」とストア掲載文の2文目である。OQ-2 の写真は、加工前の NASA 原版 AS17-148-22727 である。この2つの採用そのものは、指摘にしない。
+
+地球の出典を SOURCES.md にも書くことについて、判断は次のとおり。
+
+- TC-052 とは矛盾しない。TC-052 は、同梱された各画像と各音声に出典があり、その出典が自作であるか、禁止名称リストの作品とキャラクタ以外であることを求める。NASA の原版はその作品でもキャラクタでもない。SOURCES.md に地球の行があることは、TC-052 の合格側である。行が README のクレジット節を指すだけでも、ファイルに出典の記載はある。本文を複製しなくても TC-052 は満たせる。
+- SW105 とは矛盾する。REQ-006 の (8) と REQ-007 の (3) は、地球の写真の出典とライセンスを README の見出し「クレジット」の節だけに書く、と定めている。第6節は、同じ出典とクレジットとライセンス名を SOURCES.md の地球の行にも書く、と定め、SW105 の本文は変えていない、と自分で書いている。
+- TC-056 とも矛盾する。期待値は、出典とライセンスが README のクレジット節だけにあり、その節以外に出典がある場合は不合格、である。SOURCES.md にライセンス名と写真の識別子を書くと、TC-056 は設計どおりに実施すると Fail になる。
+
+D005 として記録する。写真の識別子と、加工しないことは、この指摘で変えない。
+
+| 指摘ID | 発生日 | 重要度 | 対象ドキュメント・箇所 | 指摘内容 | 修正提案 | 対応結果・修正内容 | ステータス |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| D005 | 2026-11-13 | High | SW205 / 第6節、第8章 OQ-2。SW105 / REQ-006、REQ-007。SWP6 / TC-056 | 【重要度: High】【ASDoQ: 3. 整合性（上位下位対応）】第6節は、地球の出典とクレジットとライセンス名を、README の見出し「クレジット」と SOURCES.md の地球の行の両方に書く、と定めている。同じ節は、SW105 が出典とライセンスを README のクレジット節だけに書くと定め、SW105 の本文は変えていない、と書いている。REQ-006 の (8) と REQ-007 の (3) の「だけ」と、両方に書くことは両立しない。TC-056 の期待値は、出典とライセンスがその節だけにあり、節以外に出典がある場合は不合格、である。この設計のまま TC-056 を実施すると Fail になる。TC-052 とは矛盾しない。TC-052 は各ファイルに出典があることを求め、NASA の原版は禁止名称リストの作品でもキャラクタでもない。行が README を指すだけでも TC-052 は満たせる。 | SOURCES.md の地球の行は、ファイル名と、出典本文が README の見出し「クレジット」にあることだけを書く。ライセンス名、権利者、URL、写真の識別子の組は、README のクレジット節だけに書く。写真は加工前の AS17-148-22727 のままにする。SW105 と TC-056 の期待値は変えない。Product Owner が本文の複製を両方に残す場合は、「だけ」と TC-056 の不合格条件を変えるため Phase 1 へ戻す。 | | Open |
+
+再レビュー完了: 指摘 5件（High: 2 / Mid: 3 / Low: 0）。Open は D005 の 1件。D001 から D004 は Closed。
 機械チェック: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`
 REVIEW: **REJECTED**（根拠: 未解消の High 指摘 1件、機械チェックの終了コード 0）
-
-## 生成担当の対応（2026-11-13）
-
-D001 から D004 を SW205 と SWP6 に反映し、各指摘のステータスを解決済にした。再レビューは別のエージェントが行う。この対応は承認ではない。総合判定の REJECTED は、反映前のレビュー結果として残す。
