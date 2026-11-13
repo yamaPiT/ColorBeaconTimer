@@ -46,10 +46,10 @@ SW205 は Phase 2 の時点では未作成であり、モジュール構成を�
 | :--- | :--- |
 | 実行OS | Windows 11 |
 | ブラウザ | 実施日時点の最新版 Google Chrome。版番号は Phase 4 の第5.1節に記録する |
-| テストフレームワーク | 純粋関数は Node.js の node:test。画面、時刻、通信は Playwright。channel は chrome。詳細は SW205 第8.2節 |
+| テストフレームワーク | 純粋関数は Node.js の node:test。画面、時刻、通信は Playwright。channel は chrome。最新版 Google Chrome を CDP の Extensions.loadUnpacked で読む。アイコンは Extensions.triggerAction。--load-extension は使わない。詳細は SW205 第8.2節 |
 | 残時間ミリ秒の読み取り | ルート要素の data-remaining-ms を読む。表示文字列は textContent。1000、1001、119999、60001 の表示は formatRemaining を node:test で呼ぶ。詳細は SW205 第8.2節 |
-| 経過時間の計測 | performance.now() の差。印の名前は SW205 第8.2節。開始点と終了点は各テストのシナリオに書く |
-| 画面上の直径の計測 | 地球の img の getBoundingClientRect() の幅と高さのうち大きい方。単位は px。data-earth-diameter-px も同じ値。直径は地球の写真を囲む最小の正方形の一辺 |
+| 経過時間の計測 | performance.now() の差。印の名前は SW205 第8.2節。開始点と終了点は各テストのシナリオに書く。TC-037 の表示間隔は #time の textContent が変わる前後の差 |
+| 画面上の直径の計測 | 地球の img の getBoundingClientRect() の幅と高さのうち大きい方。単位は px。TC-060 の合否はこの矩形である。data-earth-diameter-px は矩形と同じ値であることの照合に使う。直径は地球の写真を囲む最小の正方形の一辺 |
 | 音声ファイルの同一性 | 再生に使った URL のバイト列と、パッケージ内の shout.wav のバイト列を比較する |
 | 通信の有無 | Playwright が観測した request のうち、scheme が http または https の件数 |
 | テストデータ | SW105 に書かれた設定時刻、残時間、表示、許容誤差、画面の文字列。禁止名称リストの4文字列は、実施時に SW105 第1.3節から読む。本仕様には書き写さない |
@@ -211,3 +211,4 @@ Phase 4 で AI が、第3.1節の基準に基づき、Pass または Fail を記
 | 0.1 | 2026-11-13 | 初版。第1章から第4章を書いた。承認状態は未承認 |
 | 1.0 | 2026-11-13 | Product Owner（マサ）が版数 1.0 を承認した。承認状態は承認済み（2026-11-13、Product Owner マサ）。対象は第1章から第4章の計画である。第5章と第6章は Phase 4 で記入する。REV101_Test の再レビューは APPROVED。指摘 S001〜S005 はすべて Closed。機械チェックは High 0 / Mid 0 / 要確認 0。テスト項目の本文は変えていない |
 | 1.0 | 2026-11-13 | Phase 3 が第2.2節と TC-050 と TC-063 の未決だった手段を、SW205 第8.2節の内容で埋めた。期待値の数値は変えていない |
+| 1.0 | 2026-11-13 | 設計レビュー D001 と D002 に合わせ、第2.2節のテスト手段を直した。期待値の数値は変えていない |
