@@ -136,7 +136,8 @@ export async function waitForNewApp(context, previous, timeoutMs) {
   while (Date.now() < deadline) {
     const found = appPages(context).find((page) => !previous.has(page));
     if (found) {
-      await found.waitForSelector("#app");
+      // 最初の描画で data-state が付くまで待つ。要素だけの瞬間は読まない。
+      await found.waitForSelector("#app[data-state]");
       return found;
     }
     await new Promise((resolve) => setTimeout(resolve, 30));

@@ -59,7 +59,12 @@ AIエージェントと [DADAプロセス](https://github.com/yamaPiT/DADAProces
 
 ## クレジット
 
-終了演出の地球の写真は、NASA の原版写真 AS17-148-22727 です。色の調整も切り抜きもしていません。この写真は、アメリカ合衆国の著作権法では著作権の対象にならない NASA の画像であり、パブリックドメイン（public domain）です。
+終了演出の地球の写真は、NASA Johnson Space Center の Earth from Space が配布する AS17-148-22727 です。
+取得元は https://eol.jsc.nasa.gov/DatabaseImages/ISD/highres/AS17/AS17-148-22727.JPG です。
+一覧 https://eol.jsc.nasa.gov/collections/earthfromspace/images.pl?photo=AS17-148-22727 では、このファイルは幅 4400、高さ 4600、切り抜き無し、注釈無し、2,172,359 バイトです。
+同梱ファイルのバイト数は 2,172,359 です。寸法は 4400×4600 です。SHA-256 は 94d529d4338a5e9a227a5f4cacf332e89c180c5414d185ee7eb0c48a61a5a7e5 です。
+取得したバイト列を、色の調整も切り抜きも再保存もせずに置いています。ファイル内に Adobe Photoshop の記録はありません。
+この写真は、アメリカ合衆国の著作権法では著作権の対象にならない NASA の画像であり、パブリックドメイン（public domain）です。
 
 VOICEVOX:四国めたん
 

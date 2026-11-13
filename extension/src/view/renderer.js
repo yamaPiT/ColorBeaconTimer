@@ -115,6 +115,7 @@ function paintEarth(earth, root, viewModel) {
     return;
   }
   earth.hidden = false;
+  // ファイルは拡大縮小しない。要素の正方形が、写真を囲む一辺になる。
   earth.style.width = diameter + "px";
   earth.style.height = diameter + "px";
   const rect = earth.getBoundingClientRect();
