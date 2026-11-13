@@ -46,7 +46,7 @@ SW205 は Phase 2 の時点では未作成であり、モジュール構成を�
 | :--- | :--- |
 | 実行OS | Windows 11 |
 | ブラウザ | 実施日時点の最新版 Google Chrome。版番号は Phase 4 の第5.1節に記録する |
-| テストフレームワーク | 純粋関数は Node.js の node:test。画面、時刻、通信は Playwright。channel は chrome。最新版 Google Chrome を CDP の Extensions.loadUnpacked で読む。アイコンは Extensions.triggerAction。--load-extension は使わない。詳細は SW205 第8.2節 |
+| テストフレームワーク | 純粋関数は Node.js の node:test。画面、時刻、通信の自動テストは Playwright 同梱の Chromium。channel は指定しない。拡張は --load-extension で読む。アイコンは Extensions.triggerAction。手動の TC は最新版 Google Chrome。詳細は SW205 第8.2節 |
 | 残時間ミリ秒の読み取り | ルート要素の data-remaining-ms を読む。表示文字列は textContent。1000、1001、119999、60001 の表示は formatRemaining を node:test で呼ぶ。詳細は SW205 第8.2節 |
 | 経過時間の計測 | performance.now() の差。印の名前は SW205 第8.2節。開始点と終了点は各テストのシナリオに書く。TC-037 の表示間隔は #time の textContent が変わる前後の差 |
 | 画面上の直径の計測 | 地球の img の getBoundingClientRect() の幅と高さのうち大きい方。単位は px。TC-060 の合否はこの矩形である。data-earth-diameter-px は矩形と同じ値であることの照合に使う。直径は地球の写真を囲む最小の正方形の一辺 |
@@ -212,3 +212,4 @@ Phase 4 で AI が、第3.1節の基準に基づき、Pass または Fail を記
 | 1.0 | 2026-11-13 | Product Owner（マサ）が版数 1.0 を承認した。承認状態は承認済み（2026-11-13、Product Owner マサ）。対象は第1章から第4章の計画である。第5章と第6章は Phase 4 で記入する。REV101_Test の再レビューは APPROVED。指摘 S001〜S005 はすべて Closed。機械チェックは High 0 / Mid 0 / 要確認 0。テスト項目の本文は変えていない |
 | 1.0 | 2026-11-13 | Phase 3 が第2.2節と TC-050 と TC-063 の未決だった手段を、SW205 第8.2節の内容で埋めた。期待値の数値は変えていない |
 | 1.0 | 2026-11-13 | 設計レビュー D001 と D002 に合わせ、第2.2節のテスト手段を直した。期待値の数値は変えていない |
+| 1.0 | 2026-11-13 | 自動テストのブラウザを Playwright 同梱の Chromium に直した。期待値の数値は変えていない |
