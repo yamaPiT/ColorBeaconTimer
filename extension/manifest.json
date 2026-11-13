@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "ColorBeaconTimer",
+  "version": "1.0.0",
+  "description": "ColorBeaconTimer は、残時間に応じて色と点滅と音が変わるカウントダウンタイマーです。",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/window-launcher.js",
+    "type": "module"
+  },
+  "permissions": ["storage"]
+}

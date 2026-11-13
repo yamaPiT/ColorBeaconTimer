@@ -20,3 +20,8 @@ docs/process/.style_snapshots/
 # Python
 __pycache__/
 *.py[cod]
+
+# Playwright
+node_modules/
+test-results/
+playwright-report/

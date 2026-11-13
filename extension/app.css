@@ -1,0 +1,101 @@
+html,
+body {
+  margin: 0;
+  width: 480px;
+  height: 720px;
+  overflow: hidden;
+  background: #05070f;
+  color: #e8eefc;
+  font-family: "Segoe UI", sans-serif;
+}
+
+#app {
+  position: relative;
+  width: 480px;
+  height: 720px;
+}
+
+#stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+#beacon {
+  position: absolute;
+  z-index: 1;
+  left: 160px;
+  top: 48px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+}
+
+#time {
+  position: absolute;
+  z-index: 1;
+  top: 230px;
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 64px;
+  letter-spacing: 0.04em;
+}
+
+#signature {
+  position: absolute;
+  z-index: 1;
+  top: 620px;
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  font-family: "Segoe Script", "Comic Sans MS", cursive;
+  font-size: 28px;
+}
+
+#controls {
+  position: absolute;
+  z-index: 1;
+  top: 360px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+
+#controls button {
+  font: inherit;
+  color: #f4f7ff;
+  background: #182033;
+  border: 0;
+}
+
+#plus,
+#minus {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  font-size: 36px;
+}
+
+#sortie {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  font-size: 22px;
+  background: #1a5cff;
+  box-shadow: 0 0 24px rgba(26, 92, 255, 0.85);
+}
+
+#earth {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+}
+
+[hidden] {
+  display: none !important;
+}

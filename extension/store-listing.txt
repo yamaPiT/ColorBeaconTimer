@@ -1,0 +1,2 @@
+ColorBeaconTimer は、残時間に応じて色と点滅と音が変わるカウントダウンタイマーです。
+VOICEVOX:四国めたん
