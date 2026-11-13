@@ -12,9 +12,9 @@
 - **対象**: ブランチ `cursor/phase4-extension-impl-9dc3`（PR #4）。拡張機能のソース、`extension/assets/`、`tests/`、SWP6 第5章と第6章、TM101。
 - **入力**: 承認済み SW105 v1.1、承認済み SWP6 v1.0、承認済み SW205 v1.0、`docs/process/last_phase_summary.md`
 - **指摘ID**: 本レビューの依頼に従い C001 から付番した。
-- **総合判定**: **CHANGES_REQUESTED**
-- **根拠**: C001 は Open の High が 1 件。`dada_check.py all` の終了コードは 0。`dada_check.py report` の終了コードは 1 で High 17 件ある。この 17 件は、手動 16 件を未実施と書いたことと、第6.2節に「判定: Pass」も「判定: Fail」も無いことであり、Pass のでっち上げではない。指摘にはしない。理由は下の「機械チェック report の 17 件」に書く。
-- **件数**: 1 件（High 1 / Mid 0 / Low 0）。Open は 1 件。Closed は 0 件。
+- **総合判定**: **APPROVED**（再レビューで更新。初回は CHANGES_REQUESTED）
+- **根拠**: C001 は Closed。新しい指摘は無い。未解消の High は 0 件。再レビューの `dada_check.py all` の終了コードは 0。`report` の High 17 件は、初回と同じく手動未実施の記録であり、指摘にしない。
+- **件数**: 1 件（High 1 / Mid 0 / Low 0）。Open は 0 件。Closed は 1 件。
 - **機械チェック**: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0。`python3 tools/dada_check.py all --summary`）。続けて `DADA-CHECK: NG（High指摘あり） | High 17 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 1。`python3 tools/dada_check.py report --summary`）。`python` は未インストールのため `python3` を使った。
 - **自分で実行したテスト**: `node --test tests/unit/*.test.js` は 33 件すべて pass、失敗 0、skip 0。`npx playwright test` は 31 件すべて pass（7.4 分）、失敗 0、skip 0。実行 OS は `Linux 6.12.113+ x86_64`。ブラウザは Playwright が入れた Chrome for Testing 158.0.8127.18（chromium v1254、linux64）。channel は指定していない。
 
@@ -47,7 +47,7 @@
 | ユニットと状態とタイミングが SW205 と一致する | 合格 | 赤の式、青の 2 秒周期、終了演出の 5000 ミリ秒。単体テストとシステムテストが pass |
 | SW105 と SW205 に無い機能を足していない | 合格 | 画面の操作子は＋、−、出撃ボタン。一時停止とリセットは無い |
 | 掛け声の同梱とクレジット | 合格（音素は未確認） | wav のみ。クレジットの文字列と置き場は SW205 第6節と一致。台詞の音素は未確認 |
-| 地球写真が加工前の原版である | 不合格 | C001 |
+| 地球写真が加工前の原版である | 合格 | 再レビューで C001 を Closed。配布 JPEG とバイト一致 |
 | 出典本文の置き場 | 合格 | SOURCES.md の地球の行は README のクレジット節を指すだけ |
 | NASA の記章とロゴ | 合格（目視の範囲） | 写真に記章とロゴは見えなかった。TC-057 は未実施のまま |
 | 禁止名称と「円谷」「公認」「公式」 | 合格 | 製品のコード、画面、ファイル名、ストア掲載文、README には無い |
@@ -59,9 +59,26 @@
 
 | 指摘ID | 発生日 | 重要度 | 対象ドキュメント・箇所 | 指摘内容 | 修正提案 | 対応結果・修正内容 | ステータス |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| C001 | 2026-11-13 | High | extension/assets/images/earth.jpg。README の見出し「クレジット」。SW205 第6節。SW105 REQ-006 (8)、REQ-007 (3)。last_phase_summary の地球の写真 | 【重要度: High】【ASDoQ: 6. 規範適合性（制約適合性）】同梱の earth.jpg は、加工前の NASA 原版 AS17-148-22727 ではない。ファイルは 4579×4579 の JPEG で、1,915,552 バイトである。EXIF のソフトウェアは Adobe Photoshop CS6 (Windows)、日時は 2013:05:17 11:02:08 である。XMP は、作成ツールが Adobe Photoshop 7.0、作成日が 2013-05-10、履歴が image/tiff から image/jpeg への converted と derived、ICC が sRGB IEC61966-2.1 である。四隅と上辺中央の画素は (0, 0, 0) で、地球は黒地の円として入っている。NASA の Earth From Space の一覧（https://eol.jsc.nasa.gov/SearchPhotos/photo.pl?frame=22727&mission=AS17&roll=148 ）で、切り抜き無しの大きい JPEG は 4400×4600 である。一覧に 4579×4579 は無い。正方形の黒地と、TIFF から Photoshop で書き出した履歴は、色の調整または切り抜きを加えた派生ファイルである。README のクレジット節は「色の調整も切り抜きもしていません」と書いている。この文は、ファイルの履歴および寸法と合わない。出典の文章を README のその節だけに置き、SOURCES.md の地球の行がその節を指すだけであることは、この指摘の対象外である。写真の中に NASA の記章とロゴは見えなかった。 | earth.jpg を、切り抜き無しの NASA 配布ファイル AS17-148-22727 に差し替える。寸法は、その配布ファイルの寸法のままにする。Photoshop での再保存、sRGB への変換、正方形への切り抜き、黒地のマスクを加えない。差し替えたファイルについて、README の「色の調整も切り抜きもしていません」がファイルの履歴と合うことを確認する。識別子とライセンスの本文は、README の見出し「クレジット」だけに残す。SW105 と SWP6 の期待値は変えない。 | earth.jpg を、Johnson Space Center の Earth from Space 一覧で切り抜き無し、注釈無しとされた 4400×4600 の JPEG（2,172,359 バイト、SHA-256 94d529d4338a5e9a227a5f4cacf332e89c180c5414d185ee7eb0c48a61a5a7e5）へ、取得したバイト列のまま差し替えた。取得元は https://eol.jsc.nasa.gov/DatabaseImages/ISD/highres/AS17/AS17-148-22727.JPG である。images.nasa.gov の orig.jpg は 4579×4579 で Photoshop の記録があり、同梱していない。表示の一辺は CSS の正方形で 240 px から 4 px にし、ファイルは再保存していない。出典の URL、寸法、SHA-256 は README の見出し「クレジット」に書いた。SOURCES.md の地球の行は、その節を指すだけのままである。 | Open |
+| C001 | 2026-11-13 | High | extension/assets/images/earth.jpg。README の見出し「クレジット」。SW205 第6節。SW105 REQ-006 (8)、REQ-007 (3)。last_phase_summary の地球の写真 | 【重要度: High】【ASDoQ: 6. 規範適合性（制約適合性）】同梱の earth.jpg は、加工前の NASA 原版 AS17-148-22727 ではない。ファイルは 4579×4579 の JPEG で、1,915,552 バイトである。EXIF のソフトウェアは Adobe Photoshop CS6 (Windows)、日時は 2013:05:17 11:02:08 である。XMP は、作成ツールが Adobe Photoshop 7.0、作成日が 2013-05-10、履歴が image/tiff から image/jpeg への converted と derived、ICC が sRGB IEC61966-2.1 である。四隅と上辺中央の画素は (0, 0, 0) で、地球は黒地の円として入っている。NASA の Earth From Space の一覧（https://eol.jsc.nasa.gov/SearchPhotos/photo.pl?frame=22727&mission=AS17&roll=148 ）で、切り抜き無しの大きい JPEG は 4400×4600 である。一覧に 4579×4579 は無い。正方形の黒地と、TIFF から Photoshop で書き出した履歴は、色の調整または切り抜きを加えた派生ファイルである。README のクレジット節は「色の調整も切り抜きもしていません」と書いている。この文は、ファイルの履歴および寸法と合わない。出典の文章を README のその節だけに置き、SOURCES.md の地球の行がその節を指すだけであることは、この指摘の対象外である。写真の中に NASA の記章とロゴは見えなかった。 | earth.jpg を、切り抜き無しの NASA 配布ファイル AS17-148-22727 に差し替える。寸法は、その配布ファイルの寸法のままにする。Photoshop での再保存、sRGB への変換、正方形への切り抜き、黒地のマスクを加えない。差し替えたファイルについて、README の「色の調整も切り抜きもしていません」がファイルの履歴と合うことを確認する。識別子とライセンスの本文は、README の見出し「クレジット」だけに残す。SW105 と SWP6 の期待値は変えない。 | earth.jpg を、Johnson Space Center の Earth from Space 一覧で切り抜き無し、注釈無しとされた 4400×4600 の JPEG（2,172,359 バイト、SHA-256 94d529d4338a5e9a227a5f4cacf332e89c180c5414d185ee7eb0c48a61a5a7e5）へ、取得したバイト列のまま差し替えた。取得元は https://eol.jsc.nasa.gov/DatabaseImages/ISD/highres/AS17/AS17-148-22727.JPG である。images.nasa.gov の orig.jpg は 4579×4579 で Photoshop の記録があり、同梱していない。表示の一辺は CSS の正方形で 240 px から 4 px にし、ファイルは再保存していない。出典の URL、寸法、SHA-256 は README の見出し「クレジット」に書いた。SOURCES.md の地球の行は、その節を指すだけのままである。 | Closed |
 
-レビュー完了: 指摘 1 件（High: 1 / Mid: 0 / Low: 0）→ REV101_Code.md に記録済み。
-機械チェック: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0） / `DADA-CHECK: NG（High指摘あり） | High 17 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 1。手動未実施の 16 件と第6.2節。指摘にはしない）
-自分で実行したテスト: 単体 33 件 pass。システム 31 件 pass。
-REVIEW: **CHANGES_REQUESTED**（根拠: 未解消の High 指摘 1 件。`dada_check.py all` の終了コード 0）
+初回レビュー完了: 指摘 1 件（High: 1 / Mid: 0 / Low: 0）。当時の判定は CHANGES_REQUESTED。
+
+## 再レビュー（2026-11-13）
+
+対象は、Open だった C001 と、コミット 87b1ce1 で変わった earth.jpg、README のクレジット節、SOURCES.md、`object-fit: contain`、`tests/system/harness.js` の `data-state` 待ち、SWP6 第5章と第6章である。コード、素材、SW105、SW205、SWP6、TM101、README は編集していない。新しい指摘は無い。
+
+同梱の earth.jpg は 2,172,359 バイト、4400×4600 である。SHA-256 は 94d529d4338a5e9a227a5f4cacf332e89c180c5414d185ee7eb0c48a61a5a7e5 である。2026-11-13 に https://eol.jsc.nasa.gov/DatabaseImages/ISD/highres/AS17/AS17-148-22727.JPG を取得し、バイト列と SHA-256 が一致した。ファイル内に Photoshop の記録は無い。四隅の画素はフィルム枠の暗い余白であり、真っ黒のマスクではない。C001 は解消している。
+
+README の見出し「クレジット」は、この取得元、4400×4600、2,172,359 バイト、同じ SHA-256、切り抜き無し、パブリックドメイン（public domain）を書いている。節の外に写真の識別子とライセンス名は無い。SOURCES.md の地球の行は、出典本文がその節にあることだけである。SW105 REQ-006 と REQ-007、SW205 第6節の置き場と一致する。
+
+写真にはフィルム枠の余白が残る。`object-fit: contain` は、4400×4600 の全体を、一辺が `earthDiameterPx` の正方形の中に収める。要素の幅と高さはその一辺のままである。直径の観測は、その要素の `getBoundingClientRect()` の大きい方であり、240 px から 4 px へ 5000 ミリ秒で減る計算は変えていない。SWP6 TC-060 の 4 px と 4.9 秒以上 5.1 秒以下は変えていない。見た目の好みは指摘にしない。
+
+`waitForNewApp` は `#app` ではなく `#app[data-state]` を待つ。最初の描画まで待つだけで、特定の状態を合格条件にしていない。各テストの期待値は変えていない。TC-060 の矩形と秒数の判定も変えていない。
+
+SWP6 第5.2節の手動 16 件は、未実施（Phase 5 でマサが実施）のままである。自動 49 件は Pass である。第6.2節は総合判定を Pass にしていない。第1章から第4章の期待値は変えていない。
+
+機械チェック: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0。`python3 tools/dada_check.py all --summary`）
+自分で実行したテスト: 単体 33 件 pass。システム 31 件 pass（7.5 分）。失敗 0、skip 0。OS は Linux 6.12.113+ x86_64。ブラウザは Chrome for Testing 158.0.8127.18。
+
+再レビュー完了: 指摘 1 件（High: 1 / Mid: 0 / Low: 0）。Open は 0 件。C001 は Closed。新しい指摘は無い。
+REVIEW: **APPROVED**（根拠: 未解消の High 指摘 0 件、`dada_check.py all` の終了コード 0）
