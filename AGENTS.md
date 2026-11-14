@@ -4,6 +4,7 @@
 
 - ルール: [`.agents/AGENTS.md`](.agents/AGENTS.md)
 - スキル: [`.agents/skills/`](.agents/skills/) 配下の各 `SKILL.md`
+- Antigravity 固有機能の読み替え（Cursor / Grok）: [`docs/process/cursor_grok_setup.md`](docs/process/cursor_grok_setup.md)
 
 ## 常時適用
 
@@ -17,4 +18,4 @@ Office 文書の編集だけ、または日本語の推敲だけなど、開発�
 
 ## 既存資産
 
-`.agents/`、`docs/`、`tools/` は Antigravity 向けの正本である。この案内を置くために、それらの内容を変更したり削除したりしない。
+`.agents/`、`docs/` の既存文書、`tools/` は Antigravity 向けの正本である。この案内を置くために、それらの内容を変更したり削除したりしない。Cursor と Grok 向けの読み替えは `docs/process/cursor_grok_setup.md` に書く。
