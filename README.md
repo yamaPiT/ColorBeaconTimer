@@ -70,7 +70,7 @@ VOICEVOX:四国めたん
 
 ## 開発プロセス
 
-本リポジトリは [DADAプロセス](https://github.com/yamaPiT/DADAProcess)（Document-and-Agent-Driven Agile）のキットを同梱し、これに沿って開発します。
+本リポジトリは [DADAプロセス](https://github.com/yamaPiT/DADAProcess)（Document-and-Agent-Driven Agile）のキットを同梱し、これに沿って開発します。同梱キットは 2026-11-14 のコミット `ac2bf274b3868c498c4ea9f024ef4542b3178a8f` に合わせています。
 
 ### DADA という名前の由来
 
@@ -81,9 +81,9 @@ VOICEVOX:四国めたん
 | パス | 役割 |
 | :--- | :--- |
 | `AGENTS.md` | Cursor 向けの入口 |
-| `.agents/` | ルールとスキルの正本 |
+| `.agents/` | ルールとスキルの正本（文書レビュー用の `asdoq-reviewer` を含む） |
 | `docs/` | ガイドライン、ひな形、工程の状態、成果物 |
-| `tools/` | `dada_check.py` などの点検ツール |
+| `tools/` | `dada_check.py`、`asdoq_lint.py` などの点検ツール |
 | `scratch/` | キット保守用（本製品の開発では使いません） |
 
 アプリケーション本体の配置は、承認済みのソフトウェアアーキテクチャ設計書（`SW205` v1.0）が定めています。
@@ -117,5 +117,5 @@ VOICEVOX:四国めたん
 
 同梱の第三者著作物として、次の表示を `LICENSE` に収録しています。再配布時はこれらの表示を保持してください。
 
-- ASDoQ のシステム開発文書品質モデル関連文書（ASDoQドキュメントライセンス）
-- 日本語推敲スキル JP-Humanizer（原著作物: yomiyasu、MIT License）
+- ASDoQ のシステム開発文書品質モデル関連文書（ASDoQドキュメントライセンス）。品質モデル本文、チェックリスト、執筆ルールに加え、`tools/asdoq_dictionary.json` と `.agents/skills/asdoq-reviewer/` を含む
+- 日本語推敲スキル JP-Humanizer（原著作物: yomiyasu、MIT License）。`.agents/skills/JP-Humanizer/` と `tools/style_check.py` を含む
