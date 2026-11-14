@@ -12,9 +12,9 @@
 - **対象**: ブランチ `cursor/dada-cursor-grok-setup-03f4`（PR #6、コミット `e11b774`）。比較の基点は `work/2026-11-12`（`562c91c`）。
 - **正本**: https://github.com/yamaPiT/DADAProcess の README「他のツールで使う」。タグ `v6.1.0` のコミットは `ac2bf274b3868c498c4ea9f024ef4542b3178a8f` で、案内の版表記と一致する。Cursor の実行モードは https://cursor.com/docs/agent/security/run-modes を 2026-11-14 に読んだ。
 - **指摘ID**: 本レビューの依頼に従い、既存の REV101 と同じ表で G001 から付番する。
-- **総合判定**: **修正要**
-- **根拠**: Open が 2 件（いずれも Mid）。High は 0 件。入口ファイルは正本への参照だけで、ルールとスキルの丸写しは無い。`.agents/`、`tools/`、`extension/`、承認済み文書は `work/2026-11-12` との差分に無い。禁止名称は追加差分に無い。直す必要があるのは、エディタに無い「Auto-Run」という設定名と、クラウドの生成役が自律型でも毎フェーズ承認を待つ文である。
-- **件数**: レビュー時点は 2 件（High 0 / Mid 2 / Low 0）。生成役の対応後、G001 と G002 の状態は「対応済（再レビュー待ち）」。Closed は 0 件。
+- **総合判定**: **APPROVED**（再レビューで更新。初回は修正要）
+- **根拠**: G001 と G002 は Closed。新しい指摘は無い。Open は 0 件。入口は正本への参照のままである。`.cursor/environment.json` は Cursor の環境スキーマに合う。`.cursor/install.sh` は、この環境で 2 回実行し、どちらも終了コード 0 だった。2 回目のあとも `python --version`、`python -c "import janome"`、`python tools/dada_check.py all --summary` が通った。
+- **件数**: 2 件（High 0 / Mid 2 / Low 0）。Open は 0 件。Closed は 2 件。
 
 ### 1. 上流の「他のツールで使う」との対応
 
@@ -117,8 +117,8 @@ High は、いずれも RULE-107（「等」「など」）または RULE-108（
 | 項目 | 結果 | 根拠 |
 | :--- | :--- | :--- |
 | 案内が参照だけで、ルールとスキルを写していない | 合格 | 差分は 3 パス。`dada.mdc` は入口の 11 行 |
-| `.agents/` の Antigravity 固有箇所 | 不合格（G001） | 方式、`/swarm`、PDF、`gemini-decision-1`、Grok の 4 段は対応する。自動実行の設定名だけが現行の画面に無い |
-| 生成役とレビュー役の分離、マージはマサ | 不合格（G002） | 表と、レビュー役が記録だけで止まる文は足りている。115 行目が自律型の事前委譲を消している |
+| `.agents/` の Antigravity 固有箇所 | 合格（再レビューで G001 を Closed） | 初回は Auto-Run が画面に無かった。再レビューの第3節は、Approvals & Execution の 3 モードだけを書く |
+| 生成役とレビュー役の分離、マージはマサ | 合格（再レビューで G002 を Closed） | 承認ゲート型と自律型を分けた。マージはどちらのモードでもマサ |
 | `.agents/`、`tools/`、`extension/`、承認済み文書 | 合格 | `work/2026-11-12...HEAD` にこれらのパスは無い |
 | 禁止名称、円谷、公認、公式 | 合格 | 差分の全文に 0 件 |
 | `dada_check.py all` | 合格 | 終了コード 0。要確認 1 件は既存の見出しの誤検知 |
@@ -126,8 +126,53 @@ High は、いずれも RULE-107（「等」「など」）または RULE-108（
 
 | 指摘ID | 発生日 | 重要度 | 対象ドキュメント・箇所 | 指摘内容 | 修正提案 | 対応結果・修正内容 | ステータス |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| G001 | 2026-11-14 | Mid | `docs/process/cursor_grok_setup.md` 第3節の表、設定 2（49 行目） | 【重要度: Mid】【ASDoQ: 4. 理解容易性（非曖昧性）】自律型で確認を省く手順が、「Cursor の Agent 設定で Auto-Run を有効にし、許可するコマンドに入れる」となっている。2026-11-14 に Cursor の Run Modes（https://cursor.com/docs/agent/security/run-modes）を読んだ。デスクトップの場所は Settings > Agents > Approvals & Execution で、モードは Auto-review、Allowlist、Run Everything の 3 つである。このページに Auto-Run という設定名は無い。Cursor 3.5（2026-05-22）で Ask Every Time は廃止され、新しい利用者は選べない。同じページは、Cloud Agents do not use Run Modes であり、クラウドエージェントは専用マシンで動き、操作のたびに承認を求めない、と書く。49 行目はエディタとクラウドを分けていない。許可リストはコマンドの前方一致であり、「作業ブランチ上の」という条件はリストの項目にならない。`permissions.json` のキー名 `autoRun` は、Auto-review の分類器へ渡す文面であり、Allowlist と Run Everything では効かない。このキーを Auto-Run の代わりに有効化しても、Antigravity の Turbo Mode と同じ動きにはならない。DADA の承認ゲートと自律ゲートを Auto-Run のあとにも残す、という後半は、工程の関門とコマンド確認が別である、という上流の注意と一致する。Antigravity の Security Preset（Turbo Mode）と Artifact Review Policy（Always Proceed）が Cursor に無い、と断っている部分も事実である。 | 49 行目を、エディタとクラウドで分ける。エディタでコマンド確認を残すときは、Approvals & Execution を Allowlist にし、許可リストを空にする（Cursor 3.5 以降の、以前の Ask Every Time に相当する）。自律型で確認を省くときは、同じ画面の Allowlist に、`python`、`python3`、`pytest`、`npm test`、`git status`、`git diff`、`git add`、`git commit` を入れる。すべてを確認なしにするなら Run Everything と書く。作業ブランチは、この設定を変える前に切る手順として、許可リストとは別の文にする。クラウドエージェントには Run Modes が無いので、Auto-Run も Allowlist も探さない、と書く。DADA の承認ゲートと自律ゲートは、どちらの実行場所でも残す文を維持する。`autoRun` キーは、確認を省くスイッチとして書かない。 | 第3節の設定2を書き直した。エディタの画面は Settings > Agents > Approvals & Execution とし、モード名は Auto-review、Allowlist、Run Everything だけを書いた。確認を残すときは Allowlist で許可リストを空にし、自律型で確認を省くときは、先に作業ブランチを切ってから同じ Allowlist に `python`、`python3`、`pytest`、`npm test`、`git status`、`git diff`、`git add`、`git commit` を入れる、と書いた。確認をすべて省くときは Run Everything とした。クラウドエージェントにはこの実行モードが無い、と書いた。DADA の承認ゲートと自律ゲートはエディタとクラウドの両方に残した。Auto-Run という設定名は削除した。 | 対応済（再レビュー待ち） |
-| G002 | 2026-11-14 | Mid | `docs/process/cursor_grok_setup.md` 第6節 115 行目。同節の表（96 行目から 98 行目）は、この指摘の対象外 | 【重要度: Mid】【ASDoQ: 3. 整合性（無矛盾性）】115 行目は、生成役がマサの明示の承認（「承認します」「OK」「次へ進んで」）があるまで次のフェーズへ進まない、と実行モードを付けずに書く。同じ案内の第1節は、起動文に「DADAプロセス自律型で進めてください」とあるときだけ自律型で、無いときは承認ゲート型、と書く。`.agents/AGENTS.md` 第10.2節は、その起動文を Phase 1〜4 の承認の事前委譲とし、毎フェーズの新しい「承認します」を待たない。第10.3節の 6 条件を満たすとき、自律ゲートで遷移する。115 行目をクラウドの生成役がそのまま実行すると、第1節で起動した自律型が、毎フェーズ停止する。96 行目から 98 行目の表は、承認ゲートでの承認とマージをマサに限っており、この表自体は分離の依頼と一致する。プルリクエストの作成までを生成役が行い、マージはマサが行う、という 115 行目の後半も、モードに関係なく維持できる。質問と部分的な同意を承認とみなさない定義は、承認ゲート型では第7節どおりである。 | 115 行目の「明示の承認があるまで進まない」を、承認ゲート型に限る。自律型は、起動文を Phase 1〜4 の事前委譲とし、`.agents/AGENTS.md` 第10.3節の自律ゲートで進む、と書く。質問と部分的な同意を承認とみなさない文は、承認ゲート型の判断として残す。マージをエージェントが行わない文は、承認ゲート型と自律型の両方に残す。117 行目は承認ゲート通過後の方式Aだけを書いている。自律ゲートの通過後も `context-reset` を行うことは、正本の義務のまま残し、115 行目の修正で消さない。 | 第6節を承認ゲート型と自律型に分けた。承認ゲート型は、明示の承認があるまで次のフェーズへ進まない。質問や部分的な同意は承認とみなさない。自律型は、起動文を Phase 1〜4 の事前委譲とし、`.agents/AGENTS.md` 第10.3節の自律ゲートで進む。マージはどちらのモードでもマサが行う。承認ゲートと自律ゲートの通過後は、どちらも `context-reset` を行う、と残した。Closed はレビュー役が付ける。 | 対応済（再レビュー待ち） |
+| G001 | 2026-11-14 | Mid | `docs/process/cursor_grok_setup.md` 第3節の表、設定 2（49 行目） | 【重要度: Mid】【ASDoQ: 4. 理解容易性（非曖昧性）】自律型で確認を省く手順が、「Cursor の Agent 設定で Auto-Run を有効にし、許可するコマンドに入れる」となっている。2026-11-14 に Cursor の Run Modes（https://cursor.com/docs/agent/security/run-modes）を読んだ。デスクトップの場所は Settings > Agents > Approvals & Execution で、モードは Auto-review、Allowlist、Run Everything の 3 つである。このページに Auto-Run という設定名は無い。Cursor 3.5（2026-05-22）で Ask Every Time は廃止され、新しい利用者は選べない。同じページは、Cloud Agents do not use Run Modes であり、クラウドエージェントは専用マシンで動き、操作のたびに承認を求めない、と書く。49 行目はエディタとクラウドを分けていない。許可リストはコマンドの前方一致であり、「作業ブランチ上の」という条件はリストの項目にならない。`permissions.json` のキー名 `autoRun` は、Auto-review の分類器へ渡す文面であり、Allowlist と Run Everything では効かない。このキーを Auto-Run の代わりに有効化しても、Antigravity の Turbo Mode と同じ動きにはならない。DADA の承認ゲートと自律ゲートを Auto-Run のあとにも残す、という後半は、工程の関門とコマンド確認が別である、という上流の注意と一致する。Antigravity の Security Preset（Turbo Mode）と Artifact Review Policy（Always Proceed）が Cursor に無い、と断っている部分も事実である。 | 49 行目を、エディタとクラウドで分ける。エディタでコマンド確認を残すときは、Approvals & Execution を Allowlist にし、許可リストを空にする（Cursor 3.5 以降の、以前の Ask Every Time に相当する）。自律型で確認を省くときは、同じ画面の Allowlist に、`python`、`python3`、`pytest`、`npm test`、`git status`、`git diff`、`git add`、`git commit` を入れる。すべてを確認なしにするなら Run Everything と書く。作業ブランチは、この設定を変える前に切る手順として、許可リストとは別の文にする。クラウドエージェントには Run Modes が無いので、Auto-Run も Allowlist も探さない、と書く。DADA の承認ゲートと自律ゲートは、どちらの実行場所でも残す文を維持する。`autoRun` キーは、確認を省くスイッチとして書かない。 | 第3節の設定2を書き直した。エディタの画面は Settings > Agents > Approvals & Execution とし、モード名は Auto-review、Allowlist、Run Everything だけを書いた。確認を残すときは Allowlist で許可リストを空にし、自律型で確認を省くときは、先に作業ブランチを切ってから同じ Allowlist に `python`、`python3`、`pytest`、`npm test`、`git status`、`git diff`、`git add`、`git commit` を入れる、と書いた。確認をすべて省くときは Run Everything とした。クラウドエージェントにはこの実行モードが無い、と書いた。DADA の承認ゲートと自律ゲートはエディタとクラウドの両方に残した。Auto-Run という設定名は削除した。 | Closed |
+| G002 | 2026-11-14 | Mid | `docs/process/cursor_grok_setup.md` 第6節 115 行目。同節の表（96 行目から 98 行目）は、この指摘の対象外 | 【重要度: Mid】【ASDoQ: 3. 整合性（無矛盾性）】115 行目は、生成役がマサの明示の承認（「承認します」「OK」「次へ進んで」）があるまで次のフェーズへ進まない、と実行モードを付けずに書く。同じ案内の第1節は、起動文に「DADAプロセス自律型で進めてください」とあるときだけ自律型で、無いときは承認ゲート型、と書く。`.agents/AGENTS.md` 第10.2節は、その起動文を Phase 1〜4 の承認の事前委譲とし、毎フェーズの新しい「承認します」を待たない。第10.3節の 6 条件を満たすとき、自律ゲートで遷移する。115 行目をクラウドの生成役がそのまま実行すると、第1節で起動した自律型が、毎フェーズ停止する。96 行目から 98 行目の表は、承認ゲートでの承認とマージをマサに限っており、この表自体は分離の依頼と一致する。プルリクエストの作成までを生成役が行い、マージはマサが行う、という 115 行目の後半も、モードに関係なく維持できる。質問と部分的な同意を承認とみなさない定義は、承認ゲート型では第7節どおりである。 | 115 行目の「明示の承認があるまで進まない」を、承認ゲート型に限る。自律型は、起動文を Phase 1〜4 の事前委譲とし、`.agents/AGENTS.md` 第10.3節の自律ゲートで進む、と書く。質問と部分的な同意を承認とみなさない文は、承認ゲート型の判断として残す。マージをエージェントが行わない文は、承認ゲート型と自律型の両方に残す。117 行目は承認ゲート通過後の方式Aだけを書いている。自律ゲートの通過後も `context-reset` を行うことは、正本の義務のまま残し、115 行目の修正で消さない。 | 第6節を承認ゲート型と自律型に分けた。承認ゲート型は、明示の承認があるまで次のフェーズへ進まない。質問や部分的な同意は承認とみなさない。自律型は、起動文を Phase 1〜4 の事前委譲とし、`.agents/AGENTS.md` 第10.3節の自律ゲートで進む。マージはどちらのモードでもマサが行う。承認ゲートと自律ゲートの通過後は、どちらも `context-reset` を行う、と残した。Closed はレビュー役が付ける。 | Closed |
 
-レビュー完了: 指摘 2 件（High: 0 / Mid: 2 / Low: 0）。生成役が案内を直し、G001 と G002 は「対応済（再レビュー待ち）」。Closed はレビュー役が付ける。
-REVIEW: **修正要**（根拠: G001 は現行の Cursor に無い Auto-Run を手順にしている。G002 はクラウドの自律型を毎フェーズの承認待ちにしている。High は 0 件）
+初回レビュー完了: 指摘 2 件（High: 0 / Mid: 2 / Low: 0）。当時の判定は修正要。
+
+## 再レビュー（2026-11-14）
+
+対象は、コミット `462e835` で変わった `docs/process/cursor_grok_setup.md`、`.cursor/environment.json`、`.cursor/install.sh` である。案内とスクリプトは編集していない。比較の基点は初回の `e11b774` と、`work/2026-11-12`（`562c91c`）である。
+
+`git diff --name-status work/2026-11-12...HEAD` に、`.agents/`、`tools/`、`extension/`、SW105、SWP6、SW205、既存の REV101 は無い。増えたのは `.cursor/environment.json`、`.cursor/install.sh`、`.cursor/rules/dada.mdc`、直下の `AGENTS.md`、`docs/process/cursor_grok_setup.md`、この記録表である。
+
+### G001
+
+第3節の設定 2（49 行目）は、エディタの画面を Settings > Agents > Approvals & Execution とし、モードを Auto-review、Allowlist、Run Everything だけにした。確認を残すときは Allowlist で許可リストを空にする。自律型で確認を省くときは、先に作業ブランチを切り、同じ Allowlist に `python`、`python3`、`pytest`、`npm test`、`git status`、`git diff`、`git add`、`git commit` を入れる。すべて省くときは Run Everything である。クラウドエージェントにこの実行モードは無い、と書いた。DADA の承認ゲートと自律ゲートは、エディタとクラウドの両方に残している。案内の全文に Auto-Run は無い。`permissions.json` の `autoRun` も、確認を省くスイッチとしては書いていない。修正提案どおりである。G001 は Closed。
+
+### G002
+
+第6節は、125 行目から 131 行目でモードを分けている。承認ゲート型は、明示の承認があるまで次のフェーズへ進まず、質問や部分的な同意は承認ではない。自律型は、起動文を Phase 1〜4 の事前委譲とし、毎フェーズの新しい承認は待たず、`.agents/AGENTS.md` 第10.3節の自律ゲートを満たしたときだけ進む。マージはどちらのモードでもマサが行い、エージェントはマージしない。承認ゲートと自律ゲートの通過後は、どちらも `context-reset` を行う。役割の表（104 行目から 108 行目）は、レビュー役が記録だけ、承認とマージはマサ、のままである。G002 は Closed。
+
+承認の例から「など」が外れている。残っている 3 語は、正本第7節の例と同じである。モードを分けたことが G002 の本体であり、新しい指摘にはしない。
+
+### `.cursor/environment.json` と `.cursor/install.sh`
+
+2026-11-14 に https://cursor.com/schemas/environment.schema.json を読んだ。`name` と `install` は文字列のプロパティである。スキーマは未宣言のプロパティを拒む。このファイルにあるキーは、その 2 つだけである。`install` の説明は、VM 起動時（最新の変更を取りこんだあと）に依存を入れ直すスクリプト、である。JSON として読めた。`$schema` は書いていない。
+
+`install` の文字列は、作業ディレクトリがリポジトリ直下のとき、親の `repos/ColorBeaconTimer` のとき、`/agent/repos/ColorBeaconTimer` のとき、の順で `.cursor/install.sh` を `bash` で実行する。どれも無いときは終了コード 1 である。
+
+案内の「クラウドエージェントの自動準備」（54 行目から 62 行目）は、このスクリプトが入るものを、仮想環境 `~/.local/share/dada-venv`、`/usr/local/bin/python`、推奨パッケージ 9 つ、`npm ci`、Playwright Chromium、と書いている。スクリプトのインストール対象と一致する。パッケージ名は、DADAProcess README が任意導入として挙げる `janome`、`python-docx`、`openpyxl`、`python-pptx`、`pypdf`、`pdfplumber`、`reportlab`、`pillow`、`lxml` と同じである。`.agents/`、`tools/`、`extension/` はスクリプトが書き換えない。
+
+秘密情報は、`.cursor/environment.json` と `.cursor/install.sh` に無い。API キー、トークン、パスワード、秘密鍵の文字列は無かった。
+
+この環境でスクリプトを 2 回実行した。実行前に `python` コマンドは無く、`python3` は 3.12.3、`sudo -n true` は通った。`npm` は 10.9.9（Node 22.23.4）で、スクリプトの Node 取得分岐は走らなかった。
+
+1 回目は、リポジトリ直下で `bash .cursor/install.sh` を実行した。`python3` に `venv` が無かったため、`python3-venv` を入れ、仮想環境を作り、パッケージを入れ、`/usr/local/bin/python` をその仮想環境への起動スクリプトにした。ログに `dada-python-ok janome` がある。Playwright は Chrome for Testing 158.0.8127.18（chromium v1254）を入れた。終了コードは 0。
+
+その直後、ログインシェルで次を確認した。
+
+- `command -v python` は `/usr/local/bin/python`
+- `python --version` は Python 3.12.3
+- `python -c "import janome"` は成功
+- `python tools/dada_check.py all --summary` は終了コード 0。`DADA-CHECK: OK | High 0 / Mid 0 / 要確認 1`。要確認は、変更していない SW205 の見出し「（REQ ↔ UNIT）」である
+
+2 回目は、作業ディレクトリを `/agent` にし、`environment.json` の `install` 文字列そのものを実行した。`repos/ColorBeaconTimer/.cursor/install.sh` が選ばれた。パッケージはすでに入っている、と出て、`dada-python-ok janome` のあと Playwright の依存もすでに入っている、で終わった。終了コードは 0。仮想環境と `/usr/local/bin/python` は残った。
+
+2 回目のあとも、同じ 3 つの確認が通った。`python --version` は Python 3.12.3、`import janome` は成功、`dada_check.py all --summary --no-report` は終了コード 0 で要確認 1 件である。`git status --short` は、1 回目のあとと 2 回目のあとも空だった。追跡ファイルは増えていない。
+
+新しい指摘は無い。
+
+再レビュー完了: 指摘 2 件（High: 0 / Mid: 2 / Low: 0）。Open は 0 件。Closed は 2 件。
+REVIEW: **APPROVED**（根拠: G001 と G002 は案内の本文で解消している。`environment.json` はスキーマの `name` と `install` だけである。`install.sh` は 2 回とも終了コード 0 で、2 回目のあと `python`、janome、`dada_check.py all` が通った。秘密情報は無い）
