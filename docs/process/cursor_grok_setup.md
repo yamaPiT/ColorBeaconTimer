@@ -45,11 +45,21 @@ Antigravity の Thinking Level（`low` / `medium` / `high` / `xhigh`）は、Cur
 
 | 設定 | Cursor / Grok での扱い |
 | :--- | :--- |
-| 1. Git、3. Python 3.8 以降と拡張パッケージ | ツール共通です。手順は変えません。クラウドエージェントの実行環境には Git と Python があります。エディタでは、ターミナルで `git --version` と `python --version` が通ることを確認します。日本語の形態素解析を使うときは `pip install janome` です。未導入でも `asdoq_lint.py` は標準ライブラリへフォールバックします。 |
-| 2. 自動実行ポリシー | 承認ゲート型は、コマンドの確認を残したままで構いません。自律型で確認を省くときは、Cursor の Agent 設定で Auto-Run を有効にし、許可するコマンドに `python`、`pytest`、`npm test`、作業ブランチ上の `git status` / `git diff` / `git add` / `git commit` を入れます。Antigravity の Security Preset（Turbo Mode）と Artifact Review Policy（Always Proceed）という画面項目はありません。DADA の承認ゲートと自律ゲートは、Auto-Run をオンにしても残します。 |
+| 1. Git、3. Python 3.8 以降と拡張パッケージ | Git はツール共通です。クラウドエージェントの Python と推奨パッケージは、下の「自動準備」が入れます。エディタでは、ターミナルで `git --version` と `python --version` が通ることを確認します。 |
+| 2. 自動実行ポリシー | エディタの画面は Settings > Agents > Approvals & Execution です。モードは Auto-review、Allowlist、Run Everything です。承認ゲート型でコマンドの確認を残すときは Allowlist にし、許可リストは空にします。自律型で確認を省くときは、先に作業ブランチを切り、同じ Allowlist に `python`、`python3`、`pytest`、`npm test`、`git status`、`git diff`、`git add`、`git commit` を入れます。確認をすべて省くときは Run Everything にします。クラウドエージェントにこの実行モードはありません。DADA の承認ゲートと自律ゲートは、エディタでもクラウドでも残します。Antigravity の Security Preset（Turbo Mode）と Artifact Review Policy（Always Proceed）という画面項目は、Cursor にはありません。 |
 | 4. Global Rules（基本法） | 名前、日本語、ワークスペースルールの優先は、Cursor の User Rules に書きます。Antigravity の `~/.gemini/config/skills/global/SKILL.md` は使いません。DADA 固有の原則はリポジトリの `.agents/AGENTS.md` にあり、User Rules へは写しません。このリポジトリでは Product Owner をマサと呼びます。 |
 | 5. context7 | 任意です。使うときは、Cursor の MCP 設定、または `.cursor/mcp.json` に context7 を登録します。API キーはチャットや Git に書きません。未設定でも DADA の工程は進みます。`context7-mcp` スキルは、接続できないとき「未調査」と書いて打ち切ります。`.gitignore` にある `use-context7-for-docs.md` は Antigravity 向けのローカルルール名です。Cursor 用に作りません。 |
 | 6. Gemini Decisions API | ツール共通です。第5節のとおり、プロジェクト直下の `.env.local` に `GEMINI_API_KEY` を書きます。Grok がチャットを担当していても、`tools/asdoq_lint.py` の動きは変わりません。 |
+
+### クラウドエージェントの自動準備
+
+Cursor は、`.cursor/environment.json` の `install` で `.cursor/install.sh` を実行します。このスクリプトが次を入れます。
+
+- `python` コマンド（Python 3 の仮想環境 `~/.local/share/dada-venv` を作り、`/usr/local/bin/python` から使う）
+- DADA の推奨パッケージ: `janome`、`python-docx`、`openpyxl`、`python-pptx`、`pypdf`、`pdfplumber`、`reportlab`、`pillow`、`lxml`
+- リポジトリ直下の `npm ci` と、`npm test` 用の Playwright Chromium
+
+準備が済んだ環境では、`python tools/dada_check.py` をそのまま実行できます。`.agents/`、`tools/`、`extension/` のソースは変えません。
 
 ## 4. `.agents/` にある Antigravity 固有の記述
 
@@ -71,7 +81,7 @@ Antigravity の Thinking Level（`low` / `medium` / `high` / `xhigh`）は、Cur
 
 ## 5. ツールは共通のまま
 
-`tools/` は変更しません。Cursor からも、これまでと同じコマンドを実行します。`python` が無い環境では `python3` で同じスクリプトを起動します。
+`tools/` は変更しません。Cursor からも、これまでと同じコマンドを実行します。クラウドエージェントでは、上の自動準備のあと `python` を使います。まだ `python` が無いエディタでは `python3` で同じスクリプトを起動します。
 
 - 文書と実装の形式チェック: `python tools/dada_check.py all --summary`
 - Phase 4 の報告書チェック: `python tools/dada_check.py report --summary`
@@ -112,9 +122,13 @@ Antigravity の Thinking Level（`low` / `medium` / `high` / `xhigh`）は、Cur
 
 スキルが「レビューのあと作成スキルへ差し戻して修正する」と書いている箇所は、クラウドでは次のように読みます。レビュー役は記録を書いて止まります。修正は、別の実行の生成役が、記録表を読んで行います。同じエージェントが、レビューの直後に成果物を書き換えません。
 
-生成役は、マサの明示の承認（「承認します」「OK」「次へ進んで」など）があるまで、次のフェーズへ進みません。質問や部分的な同意は承認ではありません。プルリクエストを作るところまでは生成役が行ってよく、マージはマサが行います。エージェントはマージしません。
+承認ゲート型では、生成役はマサの明示の承認（「承認します」「OK」「次へ進んで」）があるまで、次のフェーズへ進みません。質問や部分的な同意は承認ではありません。
 
-承認ゲートを通過したあとのリセットは、`context-reset` に従い `docs/process/last_phase_summary.md` を書いたうえで、次フェーズ用の新しいクラウドエージェント（方式A）を起動します。渡す情報は第4節の方式Aと同じです。
+自律型では、起動文の「DADAプロセス自律型で進めてください」を、Phase 1〜4 の承認の事前委譲とします。毎フェーズの新しい承認は待たず、`.agents/AGENTS.md` 第10.3節の自律ゲートを満たしたときだけ次へ進みます。
+
+プルリクエストを作るところまでは生成役が行ってよく、マージは承認ゲート型でも自律型でもマサが行います。エージェントはマージしません。
+
+承認ゲートまたは自律ゲートを通過したあとのリセットは、`context-reset` に従い `docs/process/last_phase_summary.md` を書いたうえで、次フェーズ用の新しいクラウドエージェント（方式A）を起動します。渡す情報は第4節の方式Aと同じです。
 
 ## 7. この案内を置いても変えないもの
 

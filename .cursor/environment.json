@@ -1,0 +1,4 @@
+{
+  "name": "ColorBeaconTimer",
+  "install": "if [ -f .cursor/install.sh ]; then bash .cursor/install.sh; elif [ -f repos/ColorBeaconTimer/.cursor/install.sh ]; then bash repos/ColorBeaconTimer/.cursor/install.sh; elif [ -f /agent/repos/ColorBeaconTimer/.cursor/install.sh ]; then bash /agent/repos/ColorBeaconTimer/.cursor/install.sh; else echo install.sh not found >&2; exit 1; fi"
+}
