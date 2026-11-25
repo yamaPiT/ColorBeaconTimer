@@ -303,3 +303,29 @@ REVIEW: **APPROVED**（根拠: 未解消の High 指摘 0 件、`dada_check.py a
     - `extension/` 配下に一時スクリプト・一時画像等の不要ファイルは存在しない。リポジトリ直下に Chromium 実行時の未追跡ログ `debug.log`（90バイト、DNS 警告のみ）が残存しているため、コミット前整理推奨の `Low` 観察事項（1件）として記録する（製品・配布物・テスト妥当性への影響なし）。
 - **指摘件数**: 1 件（High: 0 / Mid: 0 / Low: 1。`BUG101` 未解決 Open バグ 0件）
 - **総合判定**: **REVIEW: APPROVED**（根拠: 未解決 High バグ 0件、新規指摘 High 0 / Mid 0、`dada_check.py all` 終了コード 0、単体 68件・Python 12件直接 Pass、および `SW205` v4.5 全仕様・配布文書4箇所・音声品質との整合を確認済み）
+
+---
+
+## v4.6 Phase 4 コードレビュー記録（2026-11-25）
+
+- **レビュー日**: 2026-11-25
+- **対象範囲**: v4.6 Phase 4 実装・音声生成物・テスト・配布文書一式（`extension/assets/audio/juwacchi.wav`、`extension/manifest.json`、`extension/src/audio/juwacchi-player.js`、`extension/assets/SOURCES.md`、`README.md`、`LICENSE`、`extension/store-listing.txt`、`tests/system/harness.js`、`tests/unit/audio-window.test.js`、`tests/unit/documents.test.js`、`tests/system/auto.spec.js`）
+- **参照基準**: `docs/artifacts/SW205_ソフトウェアアーキテクチャ設計書.md`（v4.6、承認済）、`docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v4.6、承認済）、`docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v4.6、報告書承認待ち）、`docs/guidelines/coding_guidelines.md`
+- **思考過程**:
+  - **①現在地**: Major 改訂（v4.6）Phase 4 実装・音声生成・配布文書同期・テスト完了後のコード品質・設計一致・テスト非改ざん・権利整合を独立した `code-reviewer` として検証する。
+  - **②判断の根拠**: `dada_check.py all --no-report --summary` 終了コード 0（`REQ↔TC: 7/7`、`REQ↔UNIT: 7/7`、`UNIT↔コード: 11/11`、`自動TC↔テストコード: 66/66`）、`juwacchi-player.js` の設計一致、`juwacchi.wav` の `read_file` 直接試聴および実測メトリクス・BGM 音量差 `+0.39 dB` 確認、`manifest.json`・配布文書4箇所の SHA-256・禁止語非含有確認、および単体 70/70・Python 12/12 Pass と一時ファイル残存なしに基づき合格条件充足を確認した。
+  - **③次の一手**: 本レビュー記録（`High: 0 / Mid: 0 / Low: 2`、`REVIEW: APPROVED`）を確定し、親エージェントへ結果と要点を報告する。
+- **検査観点と確認結果（第1周）**:
+  - **機械チェック・トレーサビリティ**: `python tools/dada_check.py all --no-report --summary` が終了コード 0（`DADA-CHECK: OK | High 0 / Mid 0 / 要確認 1`）で合格し、`docs/process/check_report.md` にて `REQ↔TC: 7/7`、`REQ↔UNIT: 7/7`、`UNIT↔コード: 11/11`、`自動TC↔テストコード: 66/66`、`BUG101`・`REV101_*` 未解決 0件、`High 0` を確認した。
+  - **設計照合・音声/再生制御（`UNIT-008`）**:
+    - `extension/src/audio/juwacchi-player.js`（L1-83）にヘッダ `UNIT-008, REQ-005, REQ-006`・版数 `4.6.0`・JSDoc があり、`JUWACCHI_GAIN = 0.17`、`playJuwacchi` の `AudioBufferSourceNode -> GainNode(gain.value = JUWACCHI_GAIN) -> audioCtx.destination` 接続、成功時 `{ ok: true, gain: JUWACCHI_GAIN }`、異常時 `{ ok: false, error: "JuwacchiUnavailable" }` が `SW205` v4.6 と一致している。
+    - `extension/assets/audio/juwacchi.wav` を `read_file` で直接試聴し、早口で元気な単一成人男性話者の「ジュワッチ！」であることを確認した。実測値は `33,644` バイト、SHA-256 `18f1686633183163ad8b48967de21f824581b36450d187a292b7243888b72545`、`24000Hz / 16bit / 1ch PCM WAV`、`16,800` フレーム（`0.7000秒`）、`overallPeak = 0.9500`（`clipped = false`）、`overallRms = 0.2180`（`-13.23 dBFS`）、`voicedF0MedianHz = 135.99 Hz`（前半 65% `142.01 Hz`、後半 35% `110.09 Hz`、`hasFemaleVoiceRange = false`）、`secondHalfPeakRatio = 0.5398`、`secondHalfHighBandToFirstRmsRatio = 0.1067` で全定量基準を満たす。`JUWACCHI_GAIN = 0.17` 適用時の実効音量は `-28.62 dBFS` であり、第2シーン・第3シーン BGM（`-29.01 dBFS`）との差は `+0.39 dB`（`±3.0 dB` 以内、目標 `±1.0 dB` 以内、非クリッピング）である。
+  - **マニフェスト・配布文書4箇所・権利検査（`UNIT-001`, `REQ-006`）**:
+    - `extension/manifest.json` は `"version": "4.6.0"`、126文字の日英併記・DADA開発例 `description`（`<= 132`）、`permissions: ["storage"]` のみである。
+    - `extension/assets/SOURCES.md`、`README.md`（Loop `→ v4.6`・簡素構造維持）、`LICENSE`、`extension/store-listing.txt` で実測 SHA-256 と仕様記載が一致し、禁止名称 8文字列・「公認」「公式」（「公式音声」文脈除く）・旧話者・旧楽曲・旧教育用途禁止 5語句の混入は 0件である。
+    - **観察事項（Low 2件、製品・テスト・権利影響なし）**: (1) `README.md` L116 の「ライセンス・著作権表示」節に「線形ピーク `0.94` 正規化」と旧表記が 1箇所残存している（直後に「全体ピーク正規化振幅 0.9500」と正しく明記済み）。(2) `tests/unit/audio-window.test.js` L3 および `tests/unit/documents.test.js` L3 のファイルヘッダ版数が `4.5.0` のまま残存している。
+  - **テスト非改ざん・実行結果・作業ツリー監査**:
+    - `tests/` 配下に `.skip(` / `.only(` / `xit(` / `xdescribe(` / `xtest(` は 0件で、要件緩和やアサートレスはない。
+    - `npm run test:unit` は 70/70 Pass（0 Fail / 0 Skipped）、`python -m unittest discover -s tests -p "test_*.py"` は 12/12 OK（1.411s）であった。`git status --short` に一時ファイルや未追跡ログの残存はない。
+- **指摘件数**: 2 件（High: 0 / Mid: 0 / Low: 2。`BUG101` 未解決 Open バグ 0件）
+- **総合判定**: **REVIEW: APPROVED**（根拠: 未解決 High バグ 0件、新規 High 0 / Mid 0、`dada_check.py all` 終了コード 0、単体 70/70・Python 12/12 直接 Pass、`juwacchi.wav` 直接試聴・実測確認、および `SW205` v4.6 全仕様・配布文書4箇所との整合を確認済み）

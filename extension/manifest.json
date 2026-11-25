@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ColorBeaconTimer",
-  "version": "4.5.0",
+  "version": "4.6.0",
   "description": "ColorBeaconTimer（DADAプロセスを用いたプログラム開発例）: 残時間に応じ色・点滅・音が変わるタイマー / Timer changing color, blink & sound (DADA development example).",
   "icons": {
     "16": "icons/icon16.png",

@@ -14,6 +14,7 @@ import test from "node:test";
 import {
   analyzeJuwacchiProsody,
   evaluateBgmLoudnessBalance,
+  evaluateJuwacchiLoudnessBalance,
   parseWavMetrics,
   validateJuwacchiProsody,
   validateLoopBoundaryQuality,
@@ -27,6 +28,7 @@ import {
 import { WINDOW_H, WINDOW_W } from "../../extension/src/domain/constants.js";
 import { playPicon } from "../../extension/src/audio/picon-synth.js";
 import {
+  JUWACCHI_GAIN,
   loadJuwacchi,
   playJuwacchi,
 } from "../../extension/src/audio/juwacchi-player.js";
@@ -74,11 +76,11 @@ test("UNIT-001 openOrFocus", async (t) => {
     assert.equal("url" in calls[2][2], false);
   });
 
-  await t.test("manifest.json は version 4.5.0 と 132文字以内の日英併記・DADA開発例 description を持つ (UNIT-001, TC-075, TC-077)", () => {
+  await t.test("manifest.json は version 4.6.0 と 132文字以内の日英併記・DADA開発例 description を持つ (UNIT-001, TC-075, TC-077)", () => {
     // Arrange
     const manifest = JSON.parse(fs.readFileSync(path.resolve("extension/manifest.json"), "utf8"));
     // Act & Assert
-    assert.equal(manifest.version, "4.5.0");
+    assert.equal(manifest.version, "4.6.0");
     assert.equal(
       manifest.description,
       "ColorBeaconTimer（DADAプロセスを用いたプログラム開発例）: 残時間に応じ色・点滅・音が変わるタイマー / Timer changing color, blink & sound (DADA development example)."
@@ -188,34 +190,50 @@ test("UNIT-008 loadJuwacchi / playJuwacchi", async (t) => {
     assert.deepEqual(failRes, { ok: false, error: "JuwacchiUnavailable" });
   });
 
-  await t.test("playJuwacchi は再生終了時に onEnded を呼び、失敗時は JuwacchiUnavailable を返す", () => {
+  await t.test("playJuwacchi は GainNode(JUWACCHI_GAIN) 経由で接続し再生終了時に onEnded を呼び、失敗時は JuwacchiUnavailable を返す", () => {
     // Arrange
     let ended = false;
     let capturedSource = null;
+    let capturedGain = null;
     const ctx = {
       state: "running",
-      destination: {},
+      destination: { kind: "dest" },
       createBufferSource() {
         capturedSource = {
           buffer: null,
           onended: null,
-          connect() {},
+          connectedTo: null,
+          connect(dest) { this.connectedTo = dest; },
           start() {},
         };
         return capturedSource;
       },
+      createGain() {
+        capturedGain = {
+          gain: { value: 1 },
+          connectedTo: null,
+          connect(dest) { this.connectedTo = dest; },
+        };
+        return capturedGain;
+      },
     };
     // Act
-    const okPlay = playJuwacchi(ctx, { duration: 1 }, () => { ended = true; });
+    const okPlay = playJuwacchi(ctx, { duration: 0.7 }, () => { ended = true; });
     capturedSource.onended();
-    const badPlay = playJuwacchi({ state: "closed" }, { duration: 1 }, () => {});
+    const badPlay = playJuwacchi({ state: "closed" }, { duration: 0.7 }, () => {});
+    const noGainPlay = playJuwacchi({ state: "running", createBufferSource: () => ({}) }, { duration: 0.7 }, () => {});
     // Assert
-    assert.deepEqual(okPlay, { ok: true });
+    assert.equal(JUWACCHI_GAIN, 0.17);
+    assert.deepEqual(okPlay, { ok: true, gain: JUWACCHI_GAIN });
+    assert.equal(capturedSource.connectedTo, capturedGain);
+    assert.equal(capturedGain.connectedTo, ctx.destination);
+    assert.equal(capturedGain.gain.value, JUWACCHI_GAIN);
     assert.equal(ended, true);
     assert.deepEqual(badPlay, { ok: false, error: "JuwacchiUnavailable" });
+    assert.deepEqual(noGainPlay, { ok: false, error: "JuwacchiUnavailable" });
   });
 
-  await t.test("同梱 juwacchi.wav の実音声長が 1.0秒 ±0.2秒（0.8〜1.2秒）である", () => {
+  await t.test("同梱 juwacchi.wav の実音声長が 0.55〜0.85秒（目標 0.70秒）である", () => {
     // Arrange
     const buf = fs.readFileSync(path.resolve("extension/assets/audio/juwacchi.wav"));
     // Act
@@ -225,7 +243,7 @@ test("UNIT-008 loadJuwacchi / playJuwacchi", async (t) => {
     const durationSec = dataSize / byteRate;
     // Assert
     assert.equal(sampleRate, 24000);
-    assert.ok(durationSec >= 0.8 && durationSec <= 1.2, `durationSec=${durationSec}`);
+    assert.ok(durationSec >= 0.55 && durationSec <= 0.85, `durationSec=${durationSec}`);
   });
 });
 
@@ -678,7 +696,7 @@ test("UNIT-008 loadOpeningBgm / createOpeningBgmPlayer", async (t) => {
     assert.equal(wavFail.ok, false, `boundarySilenceSec=${wavFail.boundarySilenceSec}`);
   });
 
-  await t.test("TC-071 同梱 juwacchi.wav の PCM形式・発音時間・全体ピーク(0.85〜0.99)・全区間RMS(0.18以上)・全体F0中央値(110〜180Hz)・前後半各区間F0中央値(85〜200Hz)・後半35%ピーク比(0.25〜0.85)・後半3〜8kHz帯域RMS抑止が全要件を満たす", () => {
+  await t.test("TC-071 同梱 juwacchi.wav の PCM形式・発音時間(0.55〜0.85秒)・全体ピーク(0.85〜0.99)・全区間RMS(0.20以上)・全体F0中央値(110〜180Hz)・前後半各区間F0中央値(85〜200Hz)・後半35%ピーク比(0.25〜0.85)・後半3〜8kHz帯域RMS抑止が全要件を満たす", () => {
     // Arrange
     const wavBuf = fs.readFileSync(path.resolve("extension/assets/audio/juwacchi.wav"));
 
@@ -692,10 +710,10 @@ test("UNIT-008 loadOpeningBgm / createOpeningBgmPlayer", async (t) => {
     assert.equal(metrics.sampleRate, 24000);
     assert.equal(metrics.bitsPerSample, 16);
     assert.equal(metrics.channels, 1);
-    assert.ok(metrics.durationSec >= 0.8 && metrics.durationSec <= 1.2, `durationSec=${metrics.durationSec}`);
+    assert.ok(metrics.durationSec >= 0.55 && metrics.durationSec <= 0.85, `durationSec=${metrics.durationSec}`);
     assert.ok(metrics.overallPeak >= 0.85 && metrics.overallPeak <= 0.99, `overallPeak=${metrics.overallPeak}`);
-    assert.ok(metrics.overallRms >= 0.18, `overallRms=${metrics.overallRms}`);
-    assert.ok(metrics.overallRmsDbfs >= -14.9, `overallRmsDbfs=${metrics.overallRmsDbfs}`);
+    assert.ok(metrics.overallRms >= 0.20, `overallRms=${metrics.overallRms}`);
+    assert.ok(metrics.overallRmsDbfs >= -14.0, `overallRmsDbfs=${metrics.overallRmsDbfs}`);
     assert.equal(metrics.clipped, false);
     assert.ok(metrics.voicedF0MedianHz >= 110 && metrics.voicedF0MedianHz <= 180, `F0=${metrics.voicedF0MedianHz}`);
     assert.ok(metrics.firstHalfVoicedF0Count > 0, "firstHalfVoicedF0Count>0");
@@ -708,7 +726,7 @@ test("UNIT-008 loadOpeningBgm / createOpeningBgmPlayer", async (t) => {
     assert.equal(verdict.ok, true, `reasons=${verdict.reasons.join(",")}`);
   });
 
-  await t.test("TC-072 境界値・異常系：v4.4 単一成人男性話者ジュワッチ音声定量検証の境界合格・境界不合格および実合成異常WAVを正確に判定する", () => {
+  await t.test("TC-072 境界値・異常系：v4.6 単一成人男性話者ジュワッチ音声定量検証の境界合格・境界不合格および実合成異常WAVを正確に判定する", () => {
     // Arrange: 基準合格メトリクス
     const baseValid = {
       validRiffWave: true,
@@ -716,30 +734,30 @@ test("UNIT-008 loadOpeningBgm / createOpeningBgmPlayer", async (t) => {
       channels: 1,
       bitsPerSample: 16,
       sampleRate: 24000,
-      durationSec: 1.00,
-      overallPeak: 0.94,
-      overallRms: 0.19,
-      overallRmsDbfs: -14.42,
+      durationSec: 0.70,
+      overallPeak: 0.95,
+      overallRms: 0.22,
+      overallRmsDbfs: -13.15,
       clipped: false,
-      voicedF0Count: 50,
-      voicedF0MedianHz: 132,
-      firstHalfVoicedF0Count: 35,
+      voicedF0Count: 36,
+      voicedF0MedianHz: 136,
+      firstHalfVoicedF0Count: 27,
       firstHalfVoicedF0MedianHz: 142,
-      secondHalfVoicedF0Count: 15,
+      secondHalfVoicedF0Count: 9,
       secondHalfVoicedF0MedianHz: 110,
       hasFemaleVoiceRange: false,
-      secondHalfPeakRatio: 0.70,
-      firstHalfFullBandRms: 0.23,
-      secondHalfHighBandRms: 0.04,
-      secondHalfHighBandToFirstRmsRatio: 0.17,
+      secondHalfPeakRatio: 0.54,
+      firstHalfFullBandRms: 0.26,
+      secondHalfHighBandRms: 0.03,
+      secondHalfHighBandToFirstRmsRatio: 0.11,
     };
 
     const passBoundaryCases = [
-      { ...baseValid, durationSec: 0.80 },
-      { ...baseValid, durationSec: 1.20 },
+      { ...baseValid, durationSec: 0.55 },
+      { ...baseValid, durationSec: 0.85 },
       { ...baseValid, overallPeak: 0.85 },
       { ...baseValid, overallPeak: 0.99 },
-      { ...baseValid, overallRms: 0.18 },
+      { ...baseValid, overallRms: 0.20 },
       { ...baseValid, voicedF0MedianHz: 110 },
       { ...baseValid, voicedF0MedianHz: 180 },
       { ...baseValid, firstHalfVoicedF0MedianHz: 85 },
@@ -757,12 +775,12 @@ test("UNIT-008 loadOpeningBgm / createOpeningBgmPlayer", async (t) => {
       [{ ...baseValid, sampleRate: 23999 }, "UnexpectedAudioParams"],
       [{ ...baseValid, bitsPerSample: 8 }, "UnexpectedAudioParams"],
       [{ ...baseValid, channels: 2 }, "UnexpectedAudioParams"],
-      [{ ...baseValid, durationSec: 0.79 }, "DurationOutOfRange"],
-      [{ ...baseValid, durationSec: 1.21 }, "DurationOutOfRange"],
+      [{ ...baseValid, durationSec: 0.54 }, "DurationOutOfRange"],
+      [{ ...baseValid, durationSec: 0.86 }, "DurationOutOfRange"],
       [{ ...baseValid, overallPeak: 0.84 }, "OverallPeakOrClippingInvalid"],
       [{ ...baseValid, overallPeak: 1.00 }, "OverallPeakOrClippingInvalid"],
       [{ ...baseValid, clipped: true }, "OverallPeakOrClippingInvalid"],
-      [{ ...baseValid, overallRms: 0.17 }, "OverallRmsTooLow"],
+      [{ ...baseValid, overallRms: 0.19 }, "OverallRmsTooLow"],
       [{ ...baseValid, voicedF0MedianHz: 109 }, "F0OutOfMaleRange"],
       [{ ...baseValid, voicedF0MedianHz: 181 }, "F0OutOfMaleRange"],
       [{ ...baseValid, voicedF0MedianHz: 220, hasFemaleVoiceRange: true }, "F0OutOfMaleRange"],
@@ -777,7 +795,7 @@ test("UNIT-008 loadOpeningBgm / createOpeningBgmPlayer", async (t) => {
     ];
 
     // 実合成モノラル WAV 生成ヘルパ
-    const buildMonoWav = ({ sampleRate = 24000, bitsPerSample = 16, channels = 1, audioFormat = 1, durationSec = 1.0 }, fn) => {
+    const buildMonoWav = ({ sampleRate = 24000, bitsPerSample = 16, channels = 1, audioFormat = 1, durationSec = 0.70 }, fn) => {
       const frames = Math.round(sampleRate * durationSec);
       const bytesPerSample = bitsPerSample / 8;
       const blockAlign = channels * bytesPerSample;
@@ -814,39 +832,39 @@ test("UNIT-008 loadOpeningBgm / createOpeningBgmPlayer", async (t) => {
 
     const validMaleSynth = buildMonoWav({}, (i, sr) => {
       const t = i / sr;
-      return t < 0.65 ? 0.90 * Math.sin(2 * Math.PI * 155 * t) : 0.50 * Math.sin(2 * Math.PI * 150 * t);
+      return t < 0.455 ? 0.90 * Math.sin(2 * Math.PI * 155 * t) : 0.50 * Math.sin(2 * Math.PI * 150 * t);
     });
     const femaleF0Wav = buildMonoWav({}, (i, sr) => {
       const t = i / sr;
-      return t < 0.65 ? 0.90 * Math.sin(2 * Math.PI * 240 * t) : 0.50 * Math.sin(2 * Math.PI * 240 * t);
+      return t < 0.455 ? 0.90 * Math.sin(2 * Math.PI * 240 * t) : 0.50 * Math.sin(2 * Math.PI * 240 * t);
     });
     const segmentF0FailWav = buildMonoWav({}, (i, sr) => {
       const t = i / sr;
-      return t < 0.65 ? 0.90 * Math.sin(2 * Math.PI * 145 * t) : 0.50 * Math.sin(2 * Math.PI * 240 * t);
+      return t < 0.455 ? 0.90 * Math.sin(2 * Math.PI * 145 * t) : 0.50 * Math.sin(2 * Math.PI * 240 * t);
     });
     const lowRmsWav = buildMonoWav({}, (i, sr) => {
       const t = i / sr;
       if (t < 0.03) return 0.90 * Math.sin(2 * Math.PI * 155 * t);
-      if (t < 0.65) return 0.12 * Math.sin(2 * Math.PI * 155 * t);
-      if (t < 0.68) return 0.45 * Math.sin(2 * Math.PI * 150 * t);
+      if (t < 0.455) return 0.12 * Math.sin(2 * Math.PI * 155 * t);
+      if (t < 0.485) return 0.45 * Math.sin(2 * Math.PI * 150 * t);
       return 0.0;
     });
     const lowPeakRatioWav = buildMonoWav({}, (i, sr) => {
       const t = i / sr;
-      return t < 0.65 ? 0.90 * Math.sin(2 * Math.PI * 155 * t) : 0.18 * Math.sin(2 * Math.PI * 150 * t);
+      return t < 0.455 ? 0.90 * Math.sin(2 * Math.PI * 155 * t) : 0.18 * Math.sin(2 * Math.PI * 150 * t);
     });
     const highBandLoudWav = buildMonoWav({}, (i, sr) => {
       const t = i / sr;
-      if (t < 0.10) return 0.90 * Math.sin(2 * Math.PI * 155 * t);
-      if (t < 0.65) return 0.10 * Math.sin(2 * Math.PI * 155 * t);
+      if (t < 0.07) return 0.90 * Math.sin(2 * Math.PI * 155 * t);
+      if (t < 0.455) return 0.10 * Math.sin(2 * Math.PI * 155 * t);
       return 0.60 * Math.sin(2 * Math.PI * 5000 * t);
     });
     const clippedWav = buildMonoWav({}, (i, sr) => {
       const t = i / sr;
-      return t < 0.65 ? 0.99997 * Math.sin(2 * Math.PI * 155 * t) : 0.55 * Math.sin(2 * Math.PI * 150 * t);
+      return t < 0.455 ? 0.99997 * Math.sin(2 * Math.PI * 155 * t) : 0.55 * Math.sin(2 * Math.PI * 150 * t);
     });
     const badRateWav = buildMonoWav({ sampleRate: 23999 }, (i, sr) => 0.90 * Math.sin(2 * Math.PI * 155 * (i / sr)));
-    const shortWav = buildMonoWav({ durationSec: 0.79 }, (i, sr) => 0.90 * Math.sin(2 * Math.PI * 155 * (i / sr)));
+    const shortWav = buildMonoWav({ durationSec: 0.54 }, (i, sr) => 0.90 * Math.sin(2 * Math.PI * 155 * (i / sr)));
 
     // Act & Assert
     for (const c of passBoundaryCases) {
@@ -891,5 +909,59 @@ test("UNIT-008 loadOpeningBgm / createOpeningBgmPlayer", async (t) => {
     const rShort = validateJuwacchiProsody(shortWav);
     assert.equal(rShort.ok, false);
     assert.ok(rShort.reasons.includes("DurationOutOfRange"));
+  });
+
+  await t.test("TC-078 同梱 juwacchi.wav と JUWACCHI_GAIN の再生時実効音量が第2・第3シーン BGM と ±3.0 dB 以内かつ非クリッピングである", () => {
+    // Arrange
+    const wavBuf = fs.readFileSync(path.resolve("extension/assets/audio/juwacchi.wav"));
+    const metrics = analyzeJuwacchiProsody(wavBuf);
+    // 第2シーン gymnopedie1.ogg 実測 RMS 0.03544 (-29.01 dBFS), 第3シーン space-adventure-synth.wav 実測 RMS 0.1969 (gain=0.18 -> -29.01 dBFS)
+    const scene2Rms = 0.03544;
+    const scene3Rms = 0.1969;
+
+    // Act
+    const verdict = evaluateJuwacchiLoudnessBalance(
+      scene2Rms,
+      OPENING_BGM_GAINS.scene2,
+      scene3Rms,
+      OPENING_BGM_GAINS.scene3,
+      metrics.overallRms,
+      JUWACCHI_GAIN,
+      0.80,
+      0.85,
+      metrics.overallPeak
+    );
+
+    // Assert
+    assert.equal(verdict.ok, true, `reasons=${verdict.reasons.join(",")}`);
+    assert.ok(Math.abs(verdict.diffVsScene2Db) <= 3.0, `diffVsScene2Db=${verdict.diffVsScene2Db}`);
+    assert.ok(Math.abs(verdict.diffVsScene3Db) <= 3.0, `diffVsScene3Db=${verdict.diffVsScene3Db}`);
+    assert.equal(verdict.clipped, false);
+  });
+
+  await t.test("TC-079 境界値・異常系：ジュワッチ再生時実効音量バランス判定の許容境界（±3.0 dB）・境界外側（±3.1 dB）・クリッピングを正確に判定する", () => {
+    // Arrange
+    const baseRms = 0.03544; // -29.01 dBFS
+    const rmsPlus30 = baseRms * Math.pow(10, 3.0 / 20);
+    const rmsMinus30 = baseRms * Math.pow(10, -3.0 / 20);
+    const rmsPlus31 = baseRms * Math.pow(10, 3.1 / 20);
+    const rmsMinus31 = baseRms * Math.pow(10, -3.1 / 20);
+
+    // Act
+    const passPlus30 = evaluateJuwacchiLoudnessBalance(baseRms, 1.0, baseRms, 1.0, rmsPlus30, 1.0, 0.80, 0.80, 0.95);
+    const passMinus30 = evaluateJuwacchiLoudnessBalance(baseRms, 1.0, baseRms, 1.0, rmsMinus30, 1.0, 0.80, 0.80, 0.95);
+    const failPlus31 = evaluateJuwacchiLoudnessBalance(baseRms, 1.0, baseRms, 1.0, rmsPlus31, 1.0, 0.80, 0.80, 0.95);
+    const failMinus31 = evaluateJuwacchiLoudnessBalance(baseRms, 1.0, baseRms, 1.0, rmsMinus31, 1.0, 0.80, 0.80, 0.95);
+    const failClip = evaluateJuwacchiLoudnessBalance(baseRms, 1.0, baseRms, 1.0, baseRms, 1.0, 0.80, 0.80, 1.00);
+
+    // Assert
+    assert.equal(passPlus30.ok, true);
+    assert.equal(passMinus30.ok, true);
+    assert.equal(failPlus31.ok, false);
+    assert.ok(failPlus31.reasons.includes("LoudnessDiffExceedsLimit"));
+    assert.equal(failMinus31.ok, false);
+    assert.ok(failMinus31.reasons.includes("LoudnessDiffExceedsLimit"));
+    assert.equal(failClip.ok, false);
+    assert.ok(failClip.reasons.includes("PlaybackClippingDetected"));
   });
 });

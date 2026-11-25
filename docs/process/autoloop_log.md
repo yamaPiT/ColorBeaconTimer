@@ -7,8 +7,8 @@
 
 - **対象プロジェクト**: ColorBeaconTimer
 - **開発対象**: 従来型プログラム
-- **要求仕様の確認ゲート**: Phase 1（v4.4 壁打ち・承認）後、Phase 2〜4 完走
-- **最終更新日**: 2026-11-22
+- **要求仕様の確認ゲート**: Phase 0 で PO 承認取得後、Phase 1〜4 完走（v4.6）
+- **最終更新日**: 2026-11-25
 
 ## 遷移条件（この6条件をすべて満たすときのみ PROCEED とする）
 
@@ -70,6 +70,11 @@
 | 39 | 2026-11-22 15:52 | Phase 2: 総合テスト仕様策定（v4.4 Major 開発Loop） | Phase 3: アーキテクチャ設計 | 0 / DADA-CHECK: 要対応（Mid指摘あり） \| High 0 / Mid 2 / 要確認 1 | APPROVED / 残High 0件 | PROCEED | 6条件すべて充足（SWP6 v4.4 計画承認済・TC-001〜TC-077全77件［自動64/手動13］・REQ↔TC 7/7網羅・第5〜6章未実施リセット・Mid 2件は新規TC-076/TC-077でPhase 4実装予定・asdoq_lint High=0/Mid=0・style_check lint/verify OK・REV101_Test 2周目APPROVED） |
 | 40 | 2026-11-22 16:15 | Phase 3: アーキテクチャ設計（v4.4 Major 開発Loop） | Phase 4: 実装・デバッグ・総合テスト報告 | 0 / DADA-CHECK: 要対応（Mid指摘あり） \| High 0 / Mid 2 / 要確認 1 | APPROVED / 残High 0件 | PROCEED | 6条件すべて充足（SW205 v4.4承認済・UNIT-001〜011維持＆700x720・manifest 4.4.0/126文字・VOICEVOX:玄野武宏一括合成ADR-015・EXITボタンADR-016・DADA開発例位置づけと2特徴・README簡素化設計確定・SWP6 表1全13件TBD解消・表12全77件網羅・Mid 2件はTC-076/TC-077でPhase 4実装予定・REV101_Design 2周目APPROVED） |
 | 41 | 2026-11-22 17:10 | Phase 4: 実装・デバッグ・総合テスト報告（v4.4 Major 開発Loop） | Phase 5: 人間による評価と要求見直し | 0 / all: OK (High 0 / Mid 0 / 要確認 1), report: OK (High 0 / Mid 0 / 要確認 0) | APPROVED / 残High 0件 | PROCEED | 6条件すべて充足（v4.4.0、VOICEVOX:玄野武宏ノーマル一括合成juwacchi.wav F0 131.88Hz［前半142.43Hz/後半109.09Hz］/RMS 0.1908/Peak 0.9400・read_file試聴確認・EXITボタン排他表示と閉鎖終了・README簡素化＆開発状況削除＆DADA開発例/2特徴/教育禁止語0件・配布文書4箇所同期・単体68項目Pass・システム9テストPass［6.4分、SWP6全77件Pass：自動64/手動13、実ビューポート686x683px］・BUG101新規0件・REV101_Code/REV101_Test APPROVED） |
+| 42 | 2026-11-25 16:40 | Phase 0: ルーティング（v4.6 Major 開発Loop 開始） | Phase 1: 要求定義 | 0 / DADA-CHECK: OK \| High 0 / Mid 0 / 要確認 1 | 事前委譲開始（残High 0件） | PROCEED | PO（マサ）が自律型および「VOICEVOX:玄野武宏で話速・抑揚を上げて再合成しGainNodeでBGM同等水準（±3.0 dB以内）へ揃える」方針を明示選択。開発対象: 従来型プログラム / 実行モード: 自律型 / 動作モード: ツール自動 / スケール: Major（SW105・SWP6・SW205改訂） |
+| 43 | 2026-11-25 16:47 | Phase 1: 要求定義（v4.6 Major 開発Loop） | Phase 2: 総合テスト仕様策定 | 0 / DADA-CHECK: OK \| High 0 / Mid 0 / 要確認 1 | APPROVED / 残High 0件 | PROCEED | 6条件すべて充足（SW105 v4.6 承認済・発音時間0.55〜0.85秒・RMS 0.20以上・BGM同等音量±3.0 dB以内・REV101第22回APPROVED） |
+| 44 | 2026-11-25 16:53 | Phase 2: 総合テスト仕様策定（v4.6 Major 開発Loop） | Phase 3: アーキテクチャ設計 | 0 / DADA-CHECK: 要対応（Mid指摘あり） \| High 0 / Mid 2 / 要確認 1 | APPROVED / 残High 0件 | PROCEED | 6条件すべて充足（SWP6 v4.6 計画承認済・TC-001〜TC-079全79件［自動66/手動13］・REQ↔TC 7/7網羅・第5〜6章未実施リセット・Mid 2件は新規TC-078/TC-079でPhase 4実装予定・REV101_Test APPROVED） |
+| 45 | 2026-11-25 17:02 | Phase 3: アーキテクチャ設計（v4.6 Major 開発Loop） | Phase 4: 実装・デバッグ・総合テスト報告 | 0 / DADA-CHECK: 要対応（Mid指摘あり） \| High 0 / Mid 2 / 要確認 1 | APPROVED / 残High 0件 | PROCEED | 6条件すべて充足（SW205 v4.6 承認済・UNIT-001 4.6.0・UNIT-008 JUWACCHI_GAIN=0.18設計とjuwacchi.wav早口/抑揚強化一括合成・ADR-018・表11全14件TBD確定・表12全79件網羅・Mid 2件はTC-078/TC-079でPhase 4実装予定・REV101_Design APPROVED） |
+| 46 | 2026-11-25 17:31 | Phase 4: 実装・デバッグ・総合テスト報告（v4.6 Major 開発Loop） | Phase 5: 人間による評価と要求見直し | 0 / all: OK (High 0 / Mid 0 / 要確認 1), report: OK (High 0 / Mid 0 / 要確認 0) | APPROVED / 残High 0件 | PROCEED | 6条件すべて充足（v4.6.0、VOICEVOX:玄野武宏ノーマル一括合成＋WSOLA＋整音正規化 juwacchi.wav 0.7000s / Peak 0.9500 / RMS 0.2180 [-13.23 dBFS] / F0 135.99Hz、read_file直接試聴確認、JUWACCHI_GAIN=0.17でBGM実効音量差+0.39dB、配布文書4箇所同期、単体70件・Python 12件・システム10テスト［SWP6全79件Pass：自動66/手動13］・BUG101新規0件・REV101_Code/REV101_Test APPROVED・SWP6報告書承認済） |
 
 ## 停止時の申し送り
 

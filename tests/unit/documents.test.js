@@ -82,7 +82,7 @@ test("TC-037 / TC-038 / TC-075 禁止名称リスト8文字列・公式/公認�
 
     // Assert
     assert.equal(names.length, 8);
-    assert.equal(manifest.version, "4.5.0");
+    assert.equal(manifest.version, "4.6.0");
     assert.equal(descVerdict.ok, true, `reasons=${descVerdict.reasons.join(",")}`);
     assert.equal(manifest.description.length, 126);
     assert.deepEqual(containsName(manifest.name, names), []);
@@ -245,7 +245,7 @@ test("TC-058 / TC-066 禁止名称8文字列の大文字小文字非区別検出
     const missingBilingual = realSources.replace(/言語切替ボタンなし/g, "切替なし");
     const missingMaleVoice = realLicense.replace(/一括音声合成/g, "NONE").replace(/一括合成/g, "NONE");
     const missingViewport640 = realSources.replace(/640px/g, "500px");
-    const missingQuantSpec = realLicense.replace(/0\.18/g, "0.10");
+    const missingQuantSpec = realLicense.replace(/0\.17/g, "0.10").replace(/0\.20 以上/g, "0.10 以上");
     const missingExitSpec = realSources.replace(/EXIT/g, "CLOSE");
     const missingStoreCredit = realStore.replace(/VOICEVOX:玄野武宏/g, "");
     const badHashes = {

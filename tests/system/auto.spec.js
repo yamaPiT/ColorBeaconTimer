@@ -1,10 +1,10 @@
 /**
  * ファイル名： auto.spec.js
- * バージョン番号： 4.5.0
+ * バージョン番号： 4.6.0
  * 作成日： 2026-11-25
  * プログラマ名： Phase 4 生成担当
- * ファイルの概要： SWP6 v4.5 の自動区分総合テスト（Playwright Chromium 実ポップアップ基準）を実行する。
- * 対応機能ID（トレーサビリティ）： TC-001, TC-002, TC-003, TC-004, TC-006, TC-008, TC-009, TC-010, TC-011, TC-013, TC-014, TC-015, TC-016, TC-017, TC-018, TC-019, TC-020, TC-021, TC-022, TC-023, TC-026, TC-027, TC-029, TC-030, TC-031, TC-032, TC-034, TC-036, TC-037, TC-038, TC-042, TC-043, TC-046, TC-047, TC-048, TC-049, TC-051, TC-052, TC-053, TC-055, TC-056, TC-057, TC-059, TC-060, TC-061, TC-062, TC-063, TC-067, TC-069, TC-071, TC-072, TC-073, TC-074, TC-075, TC-076, TC-077
+ * ファイルの概要： SWP6 v4.6 の自動区分総合テスト（Playwright Chromium 実ポップアップ基準）を実行する。
+ * 対応機能ID（トレーサビリティ）： TC-001, TC-002, TC-003, TC-004, TC-006, TC-008, TC-009, TC-010, TC-011, TC-013, TC-014, TC-015, TC-016, TC-017, TC-018, TC-019, TC-020, TC-021, TC-022, TC-023, TC-026, TC-027, TC-029, TC-030, TC-031, TC-032, TC-034, TC-036, TC-037, TC-038, TC-042, TC-043, TC-046, TC-047, TC-048, TC-049, TC-051, TC-052, TC-053, TC-055, TC-056, TC-057, TC-059, TC-060, TC-061, TC-062, TC-063, TC-067, TC-069, TC-071, TC-072, TC-073, TC-074, TC-075, TC-076, TC-077, TC-078, TC-079
  */
 
 import crypto from "node:crypto";
@@ -23,6 +23,7 @@ import {
   copyWithoutBgmAsset,
   copyWithoutJuwacchi,
   evaluateBgmLoudnessBalance,
+  evaluateJuwacchiLoudnessBalance,
   forbiddenEduTerms,
   forbiddenNames,
   launchExtension,
@@ -725,7 +726,7 @@ test("オープニング 5シーン手動前後遷移・v4.3日英常時併記�
     expect(allDisplayed.includes("公式")).toBe(false);
     const manifestObj = JSON.parse(fs.readFileSync(path.resolve("extension/manifest.json"), "utf8"));
     const storeText = fs.readFileSync(path.resolve("extension/store-listing.txt"), "utf8");
-    expect(manifestObj.version).toBe("4.5.0");
+    expect(manifestObj.version).toBe("4.6.0");
     expect(manifestObj.description.length).toBe(126);
     expect(manifestObj.description).toContain("DADAプロセスを用いたプログラム開発例");
     expect(validateManifestDescription(manifestObj.description, names).ok).toBe(true);
@@ -1115,8 +1116,8 @@ test("1:00 カウントダウン完走・赤点滅・音声同一性・終了演
 
     // TC-032 & TC-034 & TC-071: 残時間 0 で endingAudio を経て juwacchi.wav バイト列・プロソディが一致し、通信 0件
     expect(dotsObs.marks["ending-audio-started"]).toBeGreaterThan(0);
-    expect(dotsObs.marks["ending-dots-started"] - dotsObs.marks["ending-audio-started"]).toBeGreaterThanOrEqual(800);
-    expect(dotsObs.marks["ending-dots-started"] - dotsObs.marks["ending-audio-started"]).toBeLessThanOrEqual(1200);
+    expect(dotsObs.marks["ending-dots-started"] - dotsObs.marks["ending-audio-started"]).toBeGreaterThanOrEqual(550);
+    expect(dotsObs.marks["ending-dots-started"] - dotsObs.marks["ending-audio-started"]).toBeLessThanOrEqual(950);
     expect(dotsObs.juwacchiUrl).toContain("assets/audio/juwacchi.wav");
     const fetchedBytes = await app.evaluate(async (url) => {
       const res = await fetch(url);
@@ -1257,10 +1258,10 @@ test("設定ボタン 2秒長押し早送りと上限・下限固定・ポイン
   }
 });
 
-test("v4.5 第3シーンシンセBGM/単一成人男性話者ジュワッチ音声プロソディ実測・境界検証・マニフェスト及び配布文書構造整合 (TC-037, TC-071, TC-072, TC-075, TC-077)", async () => {
+test("v4.6 第3シーンシンセBGM/単一成人男性話者ジュワッチ音声プロソディ実測・境界検証・マニフェスト及び配布文書構造整合 (TC-037, TC-071, TC-072, TC-075, TC-077)", async () => {
   // Arrange
   const manifest = JSON.parse(fs.readFileSync(path.resolve("extension/manifest.json"), "utf8"));
-  expect(manifest.version).toBe("4.5.0");
+  expect(manifest.version).toBe("4.6.0");
   expect(validateManifestDescription(manifest.description).ok).toBe(true);
   expect(manifest.description.length).toBe(126);
   const diskWav = fs.readFileSync(path.resolve("extension/assets/audio/juwacchi.wav"));
@@ -1300,12 +1301,12 @@ test("v4.5 第3シーンシンセBGM/単一成人男性話者ジュワッチ音�
     expect(prosody.sampleRate).toBeGreaterThanOrEqual(24000);
     expect(prosody.bitsPerSample).toBe(16);
     expect(prosody.channels).toBe(1);
-    expect(prosody.durationSec).toBeGreaterThanOrEqual(0.8);
-    expect(prosody.durationSec).toBeLessThanOrEqual(1.2);
+    expect(prosody.durationSec).toBeGreaterThanOrEqual(0.55);
+    expect(prosody.durationSec).toBeLessThanOrEqual(0.85);
     expect(prosody.overallPeak).toBeGreaterThanOrEqual(0.85);
     expect(prosody.overallPeak).toBeLessThanOrEqual(0.99);
-    expect(prosody.overallRms).toBeGreaterThanOrEqual(0.18);
-    expect(prosody.overallRmsDbfs).toBeGreaterThanOrEqual(-14.9);
+    expect(prosody.overallRms).toBeGreaterThanOrEqual(0.20);
+    expect(prosody.overallRmsDbfs).toBeGreaterThanOrEqual(-14.0);
     expect(prosody.clipped).toBe(false);
     expect(prosody.voicedF0MedianHz).toBeGreaterThanOrEqual(110);
     expect(prosody.voicedF0MedianHz).toBeLessThanOrEqual(180);
@@ -1328,28 +1329,28 @@ test("v4.5 第3シーンシンセBGM/単一成人男性話者ジュワッチ音�
       channels: 1,
       bitsPerSample: 16,
       sampleRate: 24000,
-      durationSec: 1.0,
-      overallPeak: 0.94,
-      overallRms: 0.19,
-      overallRmsDbfs: -14.42,
+      durationSec: 0.70,
+      overallPeak: 0.95,
+      overallRms: 0.22,
+      overallRmsDbfs: -13.15,
       clipped: false,
-      voicedF0Count: 50,
-      voicedF0MedianHz: 132,
-      firstHalfVoicedF0Count: 35,
+      voicedF0Count: 36,
+      voicedF0MedianHz: 136,
+      firstHalfVoicedF0Count: 27,
       firstHalfVoicedF0MedianHz: 142,
-      secondHalfVoicedF0Count: 15,
+      secondHalfVoicedF0Count: 9,
       secondHalfVoicedF0MedianHz: 110,
       hasFemaleVoiceRange: false,
-      secondHalfPeakRatio: 0.70,
-      firstHalfFullBandRms: 0.23,
-      secondHalfHighBandRms: 0.04,
-      secondHalfHighBandToFirstRmsRatio: 0.17,
+      secondHalfPeakRatio: 0.54,
+      firstHalfFullBandRms: 0.26,
+      secondHalfHighBandRms: 0.03,
+      secondHalfHighBandToFirstRmsRatio: 0.11,
     };
-    expect(validateJuwacchiProsody({ ...baseMetrics, durationSec: 0.8 }).ok).toBe(true);
-    expect(validateJuwacchiProsody({ ...baseMetrics, durationSec: 1.2 }).ok).toBe(true);
+    expect(validateJuwacchiProsody({ ...baseMetrics, durationSec: 0.55 }).ok).toBe(true);
+    expect(validateJuwacchiProsody({ ...baseMetrics, durationSec: 0.85 }).ok).toBe(true);
     expect(validateJuwacchiProsody({ ...baseMetrics, overallPeak: 0.85 }).ok).toBe(true);
     expect(validateJuwacchiProsody({ ...baseMetrics, overallPeak: 0.99 }).ok).toBe(true);
-    expect(validateJuwacchiProsody({ ...baseMetrics, overallRms: 0.18 }).ok).toBe(true);
+    expect(validateJuwacchiProsody({ ...baseMetrics, overallRms: 0.20 }).ok).toBe(true);
     expect(validateJuwacchiProsody({ ...baseMetrics, voicedF0MedianHz: 110 }).ok).toBe(true);
     expect(validateJuwacchiProsody({ ...baseMetrics, voicedF0MedianHz: 180 }).ok).toBe(true);
     expect(validateJuwacchiProsody({ ...baseMetrics, firstHalfVoicedF0MedianHz: 85 }).ok).toBe(true);
@@ -1358,11 +1359,11 @@ test("v4.5 第3シーンシンセBGM/単一成人男性話者ジュワッチ音�
     expect(validateJuwacchiProsody({ ...baseMetrics, secondHalfVoicedF0MedianHz: 200 }).ok).toBe(true);
     expect(validateJuwacchiProsody({ ...baseMetrics, secondHalfPeakRatio: 0.25 }).ok).toBe(true);
     expect(validateJuwacchiProsody({ ...baseMetrics, secondHalfPeakRatio: 0.85 }).ok).toBe(true);
-    expect(validateJuwacchiProsody({ ...baseMetrics, durationSec: 0.79 }).ok).toBe(false);
-    expect(validateJuwacchiProsody({ ...baseMetrics, durationSec: 1.21 }).ok).toBe(false);
+    expect(validateJuwacchiProsody({ ...baseMetrics, durationSec: 0.54 }).ok).toBe(false);
+    expect(validateJuwacchiProsody({ ...baseMetrics, durationSec: 0.86 }).ok).toBe(false);
     expect(validateJuwacchiProsody({ ...baseMetrics, overallPeak: 0.84 }).ok).toBe(false);
     expect(validateJuwacchiProsody({ ...baseMetrics, overallPeak: 1.0 }).ok).toBe(false);
-    expect(validateJuwacchiProsody({ ...baseMetrics, overallRms: 0.17 }).ok).toBe(false);
+    expect(validateJuwacchiProsody({ ...baseMetrics, overallRms: 0.19 }).ok).toBe(false);
     expect(validateJuwacchiProsody({ ...baseMetrics, voicedF0MedianHz: 109 }).ok).toBe(false);
     expect(validateJuwacchiProsody({ ...baseMetrics, voicedF0MedianHz: 181 }).ok).toBe(false);
     expect(validateJuwacchiProsody({ ...baseMetrics, voicedF0MedianHz: 220, hasFemaleVoiceRange: true }).ok).toBe(false);
@@ -1482,6 +1483,90 @@ test("終了演出画面 EXIT ボタン排他的表示・押下による専用�
     expect(reopenedObs.openingStep).toBe("scene1");
     expect(reopenedObs.exitVisible).toBe(false);
     expect(reopenedObs.exitHidden).toBe(true);
+  } finally {
+    await context.close();
+    fs.rmSync(session.userDataDir, { recursive: true, force: true });
+  }
+});
+
+test("ジュワッチ音声のブラウザ実再生実効音量バランス実測・境界値検証 (TC-078, TC-079)", async () => {
+  // Arrange
+  const session = await launchExtension(EXT_PATH, {
+    initScript: audioSpyInitScript,
+  });
+  const { context, extensionId, httpRequests } = session;
+
+  try {
+    const prev = new Set(appPages(context));
+    await triggerAction(context, extensionId);
+    const app = await waitForApp(context, prev);
+
+    // 第1シーン -> 第2シーン（gymnopedie1.ogg）
+    await app.waitForTimeout(2800);
+    await app.click("#btn-opening-next");
+    await waitForBgmTrack(app, "scene2", 2000);
+    const spy2 = await app.evaluate(() => window.__bgmSpy);
+    const src2Entry = spy2.sources.at(-1);
+
+    // 第2シーン -> 第3シーン（space-adventure-synth.wav）
+    await app.click("#btn-opening-next");
+    await waitForBgmTrack(app, "scene3", 2000);
+    const spy3 = await app.evaluate(() => window.__bgmSpy);
+    const src3Entry = spy3.sources.at(-1);
+
+    // 第4シーン -> 第5シーン -> 設定画面 -> 1:00 でカウントダウン開始 -> 終了まで待機
+    await app.click("#btn-opening-next");
+    await app.click("#btn-opening-next");
+    await app.waitForTimeout(150);
+    await app.click("#app");
+    await waitForState(app, "setting", 5000);
+    await setSettingMs(app, 60000);
+    await app.click("#btn-start");
+    await waitForState(app, "endingDots", 65000);
+
+    // Act: 第2・第3シーン BGM とジュワッチ音声の GainNode ゲインと実効 RMS をブラウザ内で計測
+    const spyEnd = await app.evaluate(() => window.__bgmSpy);
+    const juwacchiEntry = spyEnd.sources.find(
+      (s) => s.loop === false && s.duration >= 0.55 && s.duration <= 0.85
+    );
+    expect(juwacchiEntry).toBeTruthy();
+    expect(juwacchiEntry.connectedViaGain).toBe(true);
+    expect(juwacchiEntry.appliedGain).toBeCloseTo(0.17, 5);
+
+    const src2Stats = await app.evaluate((idx) => window.__bgmSpy.getSourceStats(idx), src2Entry.index);
+    const src3Stats = await app.evaluate((idx) => window.__bgmSpy.getSourceStats(idx), src3Entry.index);
+    const juwacchiStats = await app.evaluate((idx) => window.__bgmSpy.getSourceStats(idx), juwacchiEntry.index);
+
+    const verdict = evaluateJuwacchiLoudnessBalance(
+      src2Stats.rms,
+      src2Entry.appliedGain,
+      src3Stats.rms,
+      src3Entry.appliedGain,
+      juwacchiStats.rms,
+      juwacchiEntry.appliedGain,
+      src2Stats.peak,
+      src3Stats.peak,
+      juwacchiStats.peak
+    );
+
+    // Assert (TC-078)
+    expect(verdict.ok).toBe(true);
+    expect(Math.abs(verdict.diffVsScene2Db)).toBeLessThanOrEqual(3.0);
+    expect(Math.abs(verdict.diffVsScene3Db)).toBeLessThanOrEqual(3.0);
+    expect(verdict.clipped).toBe(false);
+    expect(httpRequests.length).toBe(0);
+
+    // Assert (TC-079): 境界値判定
+    const baseRms = 0.03544;
+    const plus30 = baseRms * Math.pow(10, 3.0 / 20);
+    const minus30 = baseRms * Math.pow(10, -3.0 / 20);
+    const plus31 = baseRms * Math.pow(10, 3.1 / 20);
+    const minus31 = baseRms * Math.pow(10, -3.1 / 20);
+    expect(evaluateJuwacchiLoudnessBalance(baseRms, 1.0, baseRms, 1.0, plus30, 1.0, 0.80, 0.80, 0.95).ok).toBe(true);
+    expect(evaluateJuwacchiLoudnessBalance(baseRms, 1.0, baseRms, 1.0, minus30, 1.0, 0.80, 0.80, 0.95).ok).toBe(true);
+    expect(evaluateJuwacchiLoudnessBalance(baseRms, 1.0, baseRms, 1.0, plus31, 1.0, 0.80, 0.80, 0.95).ok).toBe(false);
+    expect(evaluateJuwacchiLoudnessBalance(baseRms, 1.0, baseRms, 1.0, minus31, 1.0, 0.80, 0.80, 0.95).ok).toBe(false);
+    expect(evaluateJuwacchiLoudnessBalance(baseRms, 1.0, baseRms, 1.0, baseRms, 1.0, 0.80, 0.80, 1.00).ok).toBe(false);
   } finally {
     await context.close();
     fs.rmSync(session.userDataDir, { recursive: true, force: true });

@@ -642,7 +642,9 @@ function checkRequiredAttributionSection(sectionText, prefix, missing, hashes) {
     missing.push(`${prefix}:juwacchi単一男性話者一括合成方針`);
   }
   if (
-    !sectionText.includes("0.18") ||
+    !sectionText.includes("0.17") ||
+    !sectionText.includes("0.55") ||
+    !sectionText.includes("0.20") ||
     !sectionText.includes("110") ||
     !sectionText.includes("180") ||
     !sectionText.includes("85") ||
@@ -1159,6 +1161,80 @@ function goertzelPower(samples, start, len, freq, sampleRate) {
 }
 
 /**
+ * 関数名： evaluateJuwacchiLoudnessBalance
+ * 戻り値： { ok: boolean, reasons: string[], dbfs2: number, dbfs3: number, dbfsJuwacchi: number, diffVsScene2Db: number, diffVsScene3Db: number, effectivePeakJuwacchi: number, clipped: boolean }。
+ * 引数： scene2Rms, scene2Gain, scene3Rms, scene3Gain, juwacchiRms, juwacchiGain, scene2Peak, scene3Peak, juwacchiPeak。
+ * 関数の概要： ジュワッチ音声の再生時実効音量（全区間 RMS 基準の dBFS）とオープニング第2・第3シーン BGM との差が ±3.0 dB 以内かつ再生時クリッピング非発生かを判定する。
+ * 対応機能ID（トレーサビリティ）： SW205 第8.2節, TC-078, TC-079
+ */
+export function evaluateJuwacchiLoudnessBalance(
+  scene2Rms,
+  scene2Gain,
+  scene3Rms,
+  scene3Gain,
+  juwacchiRms,
+  juwacchiGain,
+  scene2Peak = 0.80,
+  scene3Peak = 0.85,
+  juwacchiPeak = 0.95
+) {
+  const reasons = [];
+  const validInputs =
+    Number.isFinite(scene2Rms) && scene2Rms > 0 &&
+    Number.isFinite(scene2Gain) && scene2Gain > 0 &&
+    Number.isFinite(scene3Rms) && scene3Rms > 0 &&
+    Number.isFinite(scene3Gain) && scene3Gain > 0 &&
+    Number.isFinite(juwacchiRms) && juwacchiRms > 0 &&
+    Number.isFinite(juwacchiGain) && juwacchiGain > 0 &&
+    Number.isFinite(scene2Peak) && scene2Peak >= 0 &&
+    Number.isFinite(scene3Peak) && scene3Peak >= 0 &&
+    Number.isFinite(juwacchiPeak) && juwacchiPeak >= 0;
+
+  if (!validInputs) {
+    return {
+      ok: false,
+      reasons: ["InvalidRmsOrGain"],
+      dbfs2: Number.NEGATIVE_INFINITY,
+      dbfs3: Number.NEGATIVE_INFINITY,
+      dbfsJuwacchi: Number.NEGATIVE_INFINITY,
+      diffVsScene2Db: Number.NaN,
+      diffVsScene3Db: Number.NaN,
+      effectivePeakJuwacchi: Number.NaN,
+      clipped: true,
+    };
+  }
+
+  const dbfs2 = 20 * Math.log10(scene2Rms * scene2Gain);
+  const dbfs3 = 20 * Math.log10(scene3Rms * scene3Gain);
+  const dbfsJuwacchi = 20 * Math.log10(juwacchiRms * juwacchiGain);
+  const diffVsScene2Db = dbfsJuwacchi - dbfs2;
+  const diffVsScene3Db = dbfsJuwacchi - dbfs3;
+  const effectivePeak2 = scene2Peak * scene2Gain;
+  const effectivePeak3 = scene3Peak * scene3Gain;
+  const effectivePeakJuwacchi = juwacchiPeak * juwacchiGain;
+  const clipped = effectivePeak2 >= 1.0 || effectivePeak3 >= 1.0 || effectivePeakJuwacchi >= 1.0;
+
+  if (!(Math.abs(diffVsScene2Db) <= 3.0 + 1e-6) || !(Math.abs(diffVsScene3Db) <= 3.0 + 1e-6)) {
+    reasons.push("LoudnessDiffExceedsLimit");
+  }
+  if (clipped) {
+    reasons.push("PlaybackClippingDetected");
+  }
+
+  return {
+    ok: reasons.length === 0,
+    reasons,
+    dbfs2,
+    dbfs3,
+    dbfsJuwacchi,
+    diffVsScene2Db,
+    diffVsScene3Db,
+    effectivePeakJuwacchi,
+    clipped,
+  };
+}
+
+/**
  * 関数名： evaluateBgmLoudnessBalance
  * 戻り値： { ok: boolean, reasons: string[], dbfs2: number, dbfs3: number, diffDb: number, absDiffDb: number, effectivePeak2: number, effectivePeak3: number, clipped: boolean }。
  * 引数： scene2Rms, scene2Gain, scene3Rms, scene3Gain, scene2Peak（任意）, scene3Peak（任意）。
@@ -1605,13 +1681,13 @@ export function validateJuwacchiProsody(target) {
   ) {
     reasons.push("UnexpectedAudioParams");
   }
-  if (!metrics || !(metrics.durationSec >= 0.80 && metrics.durationSec <= 1.20)) {
+  if (!metrics || !(metrics.durationSec >= 0.55 && metrics.durationSec <= 0.85)) {
     reasons.push("DurationOutOfRange");
   }
   if (!metrics || metrics.clipped === true || !(metrics.overallPeak >= 0.85 && metrics.overallPeak <= 0.99)) {
     reasons.push("OverallPeakOrClippingInvalid");
   }
-  if (!metrics || !(typeof metrics.overallRms === "number" && Number.isFinite(metrics.overallRms) && metrics.overallRms >= 0.18)) {
+  if (!metrics || !(typeof metrics.overallRms === "number" && Number.isFinite(metrics.overallRms) && metrics.overallRms >= 0.20)) {
     reasons.push("OverallRmsTooLow");
   }
   if (
