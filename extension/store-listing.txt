@@ -1,2 +1,3 @@
-ColorBeaconTimer は、残時間に応じて色と点滅と音が変わるカウントダウンタイマーです。
-VOICEVOX:四国めたん
+ColorBeaconTimer は、DADAプロセスを用いたプログラム開発例として開発した、残時間に応じて色・点滅・音が変わるカウントダウンタイマーです。言語切替なしで日本語と英語を併記し、終了演出画面ではランダムドット飛散とともに EXIT ボタンを表示してクリックで終了できます。
+ColorBeaconTimer is a countdown timer developed as a DADA (Document-and-Agent-Driven Agile) process program development example, changing color, blink rate, and sound with the remaining time, displaying both Japanese and English together, and showing an EXIT button on the ending dot-scatter screen to close the timer window.
+VOICEVOX:玄野武宏

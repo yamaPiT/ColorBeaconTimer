@@ -1,36 +1,48 @@
 /**
  * ファイル名： picon-synth.js
- * バージョン番号： 1.0.0
- * 作成日： 2026-11-13
+ * バージョン番号： 2.0.0
+ * 作成日： 2026-11-16
  * プログラマ名： Phase 4 生成担当
- * ファイルの概要： ピコン音を、注入された AudioContext の正弦波で1回鳴らす。
- * 対応機能ID（トレーサビリティ）： UNIT-008, REQ-004, REQ-006
+ * ファイルの概要： Web Audio API の正弦波発振によりオリジナルのピコン音を1回再生する。
+ * 対応機能ID（トレーサビリティ）： UNIT-007, REQ-004, REQ-005, REQ-006
  */
 
 import { PICON_HZ, PICON_MS } from "../domain/constants.js";
 
 /**
  * 関数名： playPicon
- * 戻り値： 音声コンテキストが閉じているときは AudioUnavailable。鳴らせたときは undefined。
- * 引数： audioCtx は注入された AudioContext。startMs は現在時刻からの遅延。単位はミリ秒。
- * 関数の概要： 880 Hz の正弦波を 80 ミリ秒鳴らす。音声ファイルは読まない。
- * 対応機能ID（トレーサビリティ）： UNIT-008, REQ-004, REQ-006
+ * 戻り値： { ok: boolean, error?: 'AudioUnavailable' }。
+ * 引数： audioCtx は Web Audio API の AudioContext、startSec は開始時刻（秒）。
+ * 関数の概要： 正弦波（880Hz, 80ms）を合成再生する。AudioContext 無効時は例外を送出せずエラーを返す。
+ * 対応機能ID（トレーサビリティ）： UNIT-007, REQ-004, REQ-005, REQ-006
  */
-export function playPicon(audioCtx, startMs) {
+export function playPicon(audioCtx, startSec) {
+  // AudioContext が未定義または closed 状態の場合は再生不可として返す。
   if (!audioCtx || audioCtx.state === "closed") {
-    return "AudioUnavailable";
+    return { ok: false, error: "AudioUnavailable" };
   }
 
-  // 正弦波を短く出す。人の声の録音も、外部の音声ファイルも使わない。
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = "sine";
-  osc.frequency.value = PICON_HZ;
-  gain.gain.value = 0.2;
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  const when = audioCtx.currentTime + Math.max(0, startMs || 0) / 1000;
-  osc.start(when);
-  osc.stop(when + PICON_MS / 1000);
-  return undefined;
+  try {
+    const start = typeof startSec === "number" ? startSec : audioCtx.currentTime;
+    const durationSec = PICON_MS / 1000;
+
+    // 発振器とエンベロープ用ゲインノードを生成して接続する。
+    const oscillator = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(PICON_HZ, start);
+
+    gain.gain.setValueAtTime(0.001, start);
+    gain.gain.exponentialRampToValueAtTime(0.25, start + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + durationSec);
+
+    oscillator.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    oscillator.start(start);
+    oscillator.stop(start + durationSec);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "AudioUnavailable" };
+  }
 }

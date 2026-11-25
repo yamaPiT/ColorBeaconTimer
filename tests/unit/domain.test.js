@@ -1,253 +1,284 @@
 /**
  * ファイル名： domain.test.js
- * バージョン番号： 1.0.0
- * 作成日： 2026-11-13
+ * バージョン番号： 4.0.0
+ * 作成日： 2026-11-19
  * プログラマ名： Phase 4 生成担当
- * ファイルの概要： 時刻と状態の純粋関数を、node:test で確認する。
- * 対応機能ID（トレーサビリティ）： UNIT-002, UNIT-003, UNIT-004, UNIT-005, UNIT-006, UNIT-007, UNIT-010, TC-033, TC-038
+ * ファイルの概要： 純粋計算ユニット（UNIT-002〜006, UNIT-009）の単体テストを実行する。
+ * 対応機能ID（トレーサビリティ）： UNIT-002, UNIT-003, UNIT-004, UNIT-005, UNIT-006, UNIT-009, TC-026, TC-027, TC-030
  */
 
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
-import { INITIAL_STATE, nextState } from "../../extension/src/domain/app-state.js";
-import { openingStep } from "../../extension/src/domain/opening-timeline.js";
-import { adjustSetting } from "../../extension/src/domain/setting-time.js";
-import { sortieStep } from "../../extension/src/domain/sortie-timeline.js";
-import { beaconZone, formatRemaining, remainingMs } from "../../extension/src/domain/remaining-time.js";
-import { bluePhase, redIntervalSec } from "../../extension/src/domain/blink-interval.js";
-import { earthDiameterPx, mulberry32, starPositions } from "../../extension/src/domain/ending-timeline.js";
+import test from "node:test";
+import { nextState } from "../../extension/src/domain/app-state.js";
+import { redPhaseDurationMs } from "../../extension/src/domain/blink-interval.js";
+import { SETTING_INITIAL_MS } from "../../extension/src/domain/constants.js";
+import { createDotField, dotPositions } from "../../extension/src/domain/ending-dots.js";
+import {
+  openingFrame,
+  stepOpeningScene,
+} from "../../extension/src/domain/opening-timeline.js";
+import {
+  beaconZone,
+  formatRemaining,
+  remainingMs,
+} from "../../extension/src/domain/remaining-time.js";
+import {
+  adjustSetting,
+  longPressRepeatSteps,
+} from "../../extension/src/domain/setting-time.js";
 
-describe("UNIT-002 nextState", () => {
-  it("新しいページの初期状態は opening である", () => {
+test("UNIT-002 nextState", async (t) => {
+  await t.test("opening は OPENING_DONE と SKIP_OPENING で setting へ遷移する", () => {
     // Arrange
-    const state = INITIAL_STATE;
+    const state = "opening";
     // Act
-    const ignored = nextState(state, { name: "unknown" });
+    const doneNext = nextState(state, "OPENING_DONE");
+    const skipNext = nextState(state, "SKIP_OPENING");
+    const unknownNext = nextState(state, "START");
     // Assert
-    assert.equal(state, "opening");
-    assert.equal(ignored, "opening");
+    assert.equal(doneNext, "setting");
+    assert.equal(skipNext, "setting");
+    assert.equal(unknownNext, "opening");
   });
 
-  it("opening は最初の click または 2500 ミリ秒で setting になる", () => {
+  await t.test("setting は START で countdown へ遷移し、countdown 中は ADJUST と START を無視する", () => {
     // Arrange
-    const early = { name: "tick", elapsedMs: 2499 };
-    const done = { name: "tick", elapsedMs: 2500 };
+    const s1 = nextState("setting", "START");
     // Act
-    const stays = nextState("opening", early);
-    const byTime = nextState("opening", done);
-    const byClick = nextState("opening", { name: "click" });
+    const afterAdjust = nextState(s1, "ADJUST");
+    const afterStart = nextState(s1, "START");
+    const afterZero = nextState(s1, "TIMER_ZERO");
     // Assert
-    assert.equal(stays, "opening");
-    assert.equal(byTime, "setting");
-    assert.equal(byClick, "setting");
+    assert.equal(s1, "countdown");
+    assert.equal(afterAdjust, "countdown");
+    assert.equal(afterStart, "countdown");
+    assert.equal(afterZero, "endingAudio");
   });
 
-  it("setting は sortie で進み、sortie は 2000 ミリ秒で countdown になる", () => {
+  await t.test("endingAudio は AUDIO_DONE / AUDIO_UNAVAILABLE で endingDots へ遷移し、endingDots からは戻らない", () => {
     // Arrange
-    const sortie = { name: "sortie" };
+    const state = "endingAudio";
     // Act
-    const next = nextState("setting", sortie);
-    const stay = nextState("sortie", { name: "tick", elapsedMs: 1999 });
-    const done = nextState("sortie", { name: "tick", elapsedMs: 2000 });
+    const doneDots = nextState(state, "AUDIO_DONE");
+    const unavailDots = nextState(state, "AUDIO_UNAVAILABLE");
+    const stay1 = nextState("endingDots", "OPENING_DONE");
+    const stay2 = nextState("endingDots", "START");
     // Assert
-    assert.equal(next, "sortie");
-    assert.equal(stay, "sortie");
-    assert.equal(done, "countdown");
-  });
-
-  it("sortie 中のボタンは状態を変えない", () => {
-    // Arrange
-    const names = ["plus", "minus", "sortie"];
-    // Act
-    const results = names.map((name) => nextState("sortie", { name }));
-    // Assert
-    assert.deepEqual(results, ["sortie", "sortie", "sortie"]);
-  });
-
-  it("countdown は再生できるとき shout、できないとき shrink になる", () => {
-    // Arrange
-    const playable = { name: "remaining-zero", canPlay: true };
-    const missing = { name: "remaining-zero", canPlay: false };
-    // Act
-    const shout = nextState("countdown", playable);
-    const shrink = nextState("countdown", missing);
-    const ignored = nextState("countdown", { name: "plus" });
-    // Assert
-    assert.equal(shout, "shout");
-    assert.equal(shrink, "shrink");
-    assert.equal(ignored, "countdown");
-  });
-
-  it("shout の終了と失敗は shrink になり、点のあと stars から setting へは戻らない", () => {
-    // Arrange
-    const ended = { name: "shout-ended" };
-    const failed = { name: "shout-failed" };
-    // Act
-    const fromEnd = nextState("shout", ended);
-    const fromFail = nextState("shout", failed);
-    const stars = nextState("shrink", { name: "tick", diameterPx: 4 });
-    const above = nextState("shrink", { name: "tick", diameterPx: 4.1 });
-    const back = nextState("stars", { name: "sortie" });
-    // Assert
-    assert.equal(fromEnd, "shrink");
-    assert.equal(fromFail, "shrink");
-    assert.equal(stars, "stars");
-    assert.equal(above, "shrink");
-    assert.equal(back, "stars");
+    assert.equal(doneDots, "endingDots");
+    assert.equal(unavailDots, "endingDots");
+    assert.equal(stay1, "endingDots");
+    assert.equal(stay2, "endingDots");
   });
 });
 
-describe("UNIT-003 openingStep", () => {
-  it("境界どおりにステップを返す", () => {
-    // Arrange
-    const samples = [0, 699, 700, 1099, 1100, 1499, 1500, 1899, 1900, 2299, 2300, 2499, 2500, 3000];
-    // Act
-    const steps = samples.map((ms) => openingStep(ms));
-    // Assert
-    assert.deepEqual(steps, [
-      "toilet", "toilet",
-      "shake", "shake",
-      "face1", "face1",
-      "face2", "face2",
-      "face3", "face3",
-      "expand", "expand",
-      "done", "done",
-    ]);
+test("UNIT-003 stepOpeningScene / openingFrame", async (t) => {
+  await t.test("stepOpeningScene は第1〜第4シーンの next/back 遷移と範囲外保持を正しく返す", () => {
+    // Arrange & Act & Assert
+    assert.equal(stepOpeningScene(1, "next"), 2);
+    assert.equal(stepOpeningScene(1, "back"), 1);
+    assert.equal(stepOpeningScene(2, "next"), 3);
+    assert.equal(stepOpeningScene(2, "back"), 1);
+    assert.equal(stepOpeningScene(3, "next"), 4);
+    assert.equal(stepOpeningScene(3, "back"), 2);
+    assert.equal(stepOpeningScene(4, "next"), 5);
+    assert.equal(stepOpeningScene(4, "back"), 3);
+    assert.equal(stepOpeningScene(5, "next"), 5);
+    assert.equal(stepOpeningScene(5, "back"), 5);
+    assert.equal(stepOpeningScene(0, "next"), 0);
+    assert.equal(stepOpeningScene(6, "back"), 6);
+  });
+
+  await t.test("openingFrame は第1〜第5シーンのボタン表示可否・画像種別・bgmTrack・第5シーン5秒拡大率・範囲外を返す", () => {
+    // Arrange & Act & Assert
+    assert.deepEqual(openingFrame(1, 9999), {
+      step: "scene1",
+      sceneIndex: 1,
+      scale: 1,
+      imageKind: "none",
+      bgmTrack: "none",
+      showBack: false,
+      showNext: true,
+    });
+    assert.deepEqual(openingFrame(2, 0), {
+      step: "scene2",
+      sceneIndex: 2,
+      scale: 1,
+      imageKind: "fountain",
+      bgmTrack: "scene2",
+      showBack: true,
+      showNext: true,
+    });
+    assert.deepEqual(openingFrame(3, 0), {
+      step: "scene3",
+      sceneIndex: 3,
+      scale: 1,
+      imageKind: "threeFace",
+      bgmTrack: "scene3",
+      showBack: true,
+      showNext: true,
+    });
+    assert.deepEqual(openingFrame(4, 0), {
+      step: "scene4",
+      sceneIndex: 4,
+      scale: 1,
+      imageKind: "none",
+      bgmTrack: "none",
+      showBack: true,
+      showNext: true,
+    });
+    assert.deepEqual(openingFrame(5, -100), {
+      step: "scene5",
+      sceneIndex: 5,
+      scale: 0,
+      imageKind: "blueLamp",
+      bgmTrack: "none",
+      showBack: false,
+      showNext: false,
+    });
+    assert.deepEqual(openingFrame(5, 0), {
+      step: "scene5",
+      sceneIndex: 5,
+      scale: 0,
+      imageKind: "blueLamp",
+      bgmTrack: "none",
+      showBack: false,
+      showNext: false,
+    });
+    assert.deepEqual(openingFrame(5, 2500), {
+      step: "scene5",
+      sceneIndex: 5,
+      scale: 0.5,
+      imageKind: "blueLamp",
+      bgmTrack: "none",
+      showBack: false,
+      showNext: false,
+    });
+    assert.deepEqual(openingFrame(5, 4999), {
+      step: "scene5",
+      sceneIndex: 5,
+      scale: 4999 / 5000,
+      imageKind: "blueLamp",
+      bgmTrack: "none",
+      showBack: false,
+      showNext: false,
+    });
+    assert.deepEqual(openingFrame(5, 5000), {
+      step: "done",
+      sceneIndex: 0,
+      scale: 1,
+      imageKind: "none",
+      bgmTrack: "none",
+      showBack: false,
+      showNext: false,
+    });
+    assert.deepEqual(openingFrame(0, 0), {
+      step: "done",
+      sceneIndex: 0,
+      scale: 1,
+      imageKind: "none",
+      bgmTrack: "none",
+      showBack: false,
+      showNext: false,
+    });
+    assert.deepEqual(openingFrame(6, 0), {
+      step: "done",
+      sceneIndex: 0,
+      scale: 1,
+      imageKind: "none",
+      bgmTrack: "none",
+      showBack: false,
+      showNext: false,
+    });
   });
 });
 
-describe("UNIT-004 adjustSetting", () => {
-  it("初期値の前後と、両端のクランプを返す", () => {
+test("UNIT-004 adjustSetting", async (t) => {
+  await t.test("初期値 120000、10000ms 単位の増減、60000〜180000 のクランプを行う", () => {
     // Arrange
-    const initial = 180000;
+    assert.equal(SETTING_INITIAL_MS, 120000);
     // Act
-    const up = adjustSetting(initial, 1000);
-    const down = adjustSetting(initial, -1000);
-    const min = adjustSetting(10000, -1000);
-    const max = adjustSetting(300000, 1000);
+    const up = adjustSetting(120000, 10000);
+    const down = adjustSetting(120000, -10000);
+    const minClamp = adjustSetting(60000, -10000);
+    const maxClamp = adjustSetting(180000, 10000);
     // Assert
-    assert.equal(up, 181000);
-    assert.equal(down, 179000);
-    assert.equal(min, 10000);
-    assert.equal(max, 300000);
+    assert.equal(up, 130000);
+    assert.equal(down, 110000);
+    assert.equal(minClamp, 60000);
+    assert.equal(maxClamp, 180000);
+  });
+
+  await t.test("longPressRepeatSteps は 2000ms 経過後から 200ms ごとに追加ステップ数を返す", () => {
+    // Arrange & Act & Assert
+    assert.equal(longPressRepeatSteps(0, 0), 0);
+    assert.equal(longPressRepeatSteps(1999, 0), 0);
+    assert.equal(longPressRepeatSteps(2000, 0), 0);
+    assert.equal(longPressRepeatSteps(2199, 0), 0);
+    assert.equal(longPressRepeatSteps(2200, 0), 1);
+    assert.equal(longPressRepeatSteps(2200, 1), 0);
+    assert.equal(longPressRepeatSteps(3000, 0), 5);
+    assert.equal(longPressRepeatSteps(3000, 3), 2);
   });
 });
 
-describe("UNIT-005 sortieStep", () => {
-  it("広がり、接近、着地、完了の境界を返す", () => {
-    // Arrange
-    const samples = [0, 699, 700, 1399, 1400, 1999, 2000];
-    // Act
-    const steps = samples.map((ms) => sortieStep(ms));
-    // Assert
-    assert.deepEqual(steps, ["spread", "spread", "approach", "approach", "land", "land", "done"]);
+test("UNIT-005 remainingMs / formatRemaining / beaconZone (TC-030)", async (t) => {
+  await t.test("TC-030 残時間と切り上げ表示文字列・色区分を境界値どおりに計算する", () => {
+    // Arrange & Act & Assert
+    assert.equal(remainingMs(120000, -500), 120000);
+    assert.equal(remainingMs(120000, 130000), 0);
+
+    assert.equal(formatRemaining(60001), "1:01");
+    assert.equal(formatRemaining(60000), "1:00");
+    assert.equal(formatRemaining(1001), "0:02");
+    assert.equal(formatRemaining(1000), "0:01");
+    assert.equal(formatRemaining(0), "0:00");
+
+    assert.equal(beaconZone(60001), "blue-solid");
+    assert.equal(beaconZone(60000), "red-blink");
+    assert.equal(beaconZone(1), "red-blink");
+    assert.equal(beaconZone(0), "off");
   });
 });
 
-describe("UNIT-006 remaining と TC-038", () => {
-  it("残時間は 0 未満にせず、負の経過は 0 として扱う", () => {
-    // Arrange
-    const start = 180000;
-    // Act
-    const normal = remainingMs(start, 1000);
-    const negativeElapsed = remainingMs(start, -50);
-    const past = remainingMs(start, 200000);
-    // Assert
-    assert.equal(normal, 179000);
-    assert.equal(negativeElapsed, 180000);
-    assert.equal(past, 0);
-  });
-
-  it("TC-038 1000、1001、119999、60001 と境界の表示を返す", () => {
-    // Arrange
-    const cases = [
-      [1000, "0:01"],
-      [1001, "0:02"],
-      [119999, "2:00"],
-      [120000, "2:00"],
-      [120001, "2:01"],
-      [60000, "1:00"],
-      [60001, "1:01"],
-    ];
-    // Act
-    const actual = cases.map(([ms]) => formatRemaining(ms));
-    // Assert
-    assert.deepEqual(actual, cases.map(([, text]) => text));
-  });
-
-  it("色の区分は残ミリ秒で決まる", () => {
-    // Arrange
-    const samples = [120001, 120000, 60001, 60000, 0];
-    // Act
-    const zones = samples.map((ms) => beaconZone(ms));
-    // Assert
-    assert.deepEqual(zones, ["blue-solid", "blue-blink", "blue-blink", "red-blink", "zero"]);
+test("UNIT-006 redPhaseDurationMs (TC-026, TC-027)", async (t) => {
+  await t.test("TC-026 / TC-027 線形加速点滅の点灯・消灯時間を正しく返す", () => {
+    // Arrange & Act & Assert
+    assert.equal(redPhaseDurationMs(60000), 1000);
+    assert.equal(redPhaseDurationMs(35000), 550);
+    assert.equal(redPhaseDurationMs(10000), 100);
+    assert.equal(redPhaseDurationMs(5000), 100);
+    assert.equal(redPhaseDurationMs(0), 0);
   });
 });
 
-describe("UNIT-007 blink と TC-033", () => {
-  it("青の1周期は fade-out 1000 のあと fade-in 1000 である", () => {
+test("UNIT-009 endingDots", async (t) => {
+  await t.test("360度全周囲方向のドットが生成され、時間経過で中央から外へ移動し再飛散する", () => {
     // Arrange
-    const points = [0, 500, 999, 1000, 1500, 1999];
+    let seed = 0;
+    const seq = [0.0, 0.25, 0.5, 0.75, 0.1, 0.9, 0.3, 0.6];
+    const rng = () => {
+      const v = seq[seed % seq.length];
+      seed += 1;
+      return v;
+    };
+    const dots = createDotField(4, rng);
     // Act
-    const phases = points.map((ms) => bluePhase(ms));
+    const p0 = dotPositions(dots, 0, 240, 360, 480, 720);
+    const p1 = dotPositions(dots, 500, 240, 360, 480, 720);
+    const pLate = dotPositions(dots, 60000, 240, 360, 480, 720);
     // Assert
-    assert.equal(phases[0].phase, "fade-out");
-    assert.equal(phases[0].opacity, 1);
-    assert.equal(phases[0].plannedMs, 1000);
-    assert.ok(phases[2].opacity < 0.01);
-    assert.equal(phases[3].phase, "fade-in");
-    assert.equal(phases[3].opacity, 0);
-    assert.ok(phases[5].opacity > 0.99);
-  });
-
-  it("TC-033 20000 ミリ秒は 20/60 秒、19800 ミリ秒は 0.33 秒である", () => {
-    // Arrange
-    const at20 = 20000;
-    const atFloor = 19800;
-    // Act
-    const high = redIntervalSec(at20);
-    const low = redIntervalSec(atFloor);
-    const below = redIntervalSec(10000);
-    const minute = redIntervalSec(60000);
-    const half = redIntervalSec(30000);
-    // Assert
-    assert.equal(high, 20 / 60);
-    assert.equal(low, 0.33);
-    assert.equal(below, 0.33);
-    assert.equal(minute, 1);
-    assert.equal(half, 0.5);
-    assert.ok(Math.abs(high - low) < 0.1);
-  });
-});
-
-describe("UNIT-010 ending", () => {
-  it("直径は 240 から 4 へ減り、5000 ミリ秒以降は 4 のままである", () => {
-    // Arrange
-    let previous = earthDiameterPx(0);
-    // Act
-    const atEnd = earthDiameterPx(5000);
-    const after = earthDiameterPx(6000);
-    // Assert
-    assert.equal(previous, 240);
-    for (let elapsed = 100; elapsed <= 5000; elapsed += 100) {
-      const next = earthDiameterPx(elapsed);
-      assert.ok(next < previous, String(elapsed));
-      previous = next;
+    assert.equal(dots.length, 4);
+    for (const d of dots) {
+      assert.ok(d.angle >= 0 && d.angle < Math.PI * 2);
+      assert.ok(d.speed > 0);
     }
-    assert.equal(atEnd, 4);
-    assert.equal(after, 4);
-    assert.ok(earthDiameterPx(4900) > 4);
-  });
-
-  it("星は同じ乱数列なら、経過とともに中心から離れる", () => {
-    // Arrange
-    const early = starPositions(0, mulberry32(1));
-    const later = starPositions(500, mulberry32(1));
-    // Act
-    const radius = (star) => Math.hypot(star.x, star.y);
-    // Assert
-    assert.equal(early.length, later.length);
-    assert.ok(radius(later[0]) > radius(early[0]));
+    assert.equal(p0[0].x, 240);
+    assert.equal(p0[0].y, 360);
+    const dist1 = Math.hypot(p1[0].x - 240, p1[0].y - 360);
+    assert.ok(dist1 > 0);
+    assert.equal(pLate.length, 4);
+    for (const pt of pLate) {
+      assert.ok(Number.isFinite(pt.x) && Number.isFinite(pt.y));
+    }
   });
 });

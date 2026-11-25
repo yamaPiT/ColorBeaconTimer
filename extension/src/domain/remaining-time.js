@@ -1,58 +1,60 @@
 /**
  * ファイル名： remaining-time.js
- * バージョン番号： 1.0.0
- * 作成日： 2026-11-13
+ * バージョン番号： 2.0.0
+ * 作成日： 2026-11-16
  * プログラマ名： Phase 4 生成担当
- * ファイルの概要： 残時間、分:秒の表示、色の区分を計算する。
- * 対応機能ID（トレーサビリティ）： UNIT-006, REQ-004, REQ-005
+ * ファイルの概要： 残時間の計算、切り上げ分:秒の整形、ランプ色区分の判定を行う。
+ * 対応機能ID（トレーサビリティ）： UNIT-005, REQ-004, REQ-005
  */
 
-import { ZONE_BLUE_BLINK_MS, ZONE_RED_MS } from "./constants.js";
+import { ZONE_RED_MS } from "./constants.js";
 
 /**
  * 関数名： remainingMs
- * 戻り値： 0 以上の残時間。単位はミリ秒。
- * 引数： startMs は開始時の長さ。elapsedMs は開始からの経過。
- * 関数の概要： 開始値から経過を引き、負の経過は 0 として、結果も 0 未満にしない。
- * 対応機能ID（トレーサビリティ）： UNIT-006, REQ-004
+ * 戻り値： 残時間（0 以上のミリ秒）。
+ * 引数： startMs は開始時の設定時刻（ミリ秒）、elapsedMs は経過時間（ミリ秒）。
+ * 関数の概要： 開始時刻から経過時間を差し引き、0 未満にならない残時間を返す。
+ * 対応機能ID（トレーサビリティ）： UNIT-005, REQ-004, REQ-005
  */
 export function remainingMs(startMs, elapsedMs) {
-  const elapsed = elapsedMs < 0 ? 0 : elapsedMs;
-  const left = startMs - elapsed;
-  return left < 0 ? 0 : left;
+  // 負の経過時間は 0 とみなし、残時間の下限を 0 に固定する。
+  const elapsed = Math.max(0, elapsedMs);
+  return Math.max(0, startMs - elapsed);
 }
 
 /**
  * 関数名： formatRemaining
- * 戻り値： 分:秒の文字列。秒は2桁。
- * 引数： ms は残時間。単位はミリ秒。
- * 関数の概要： 1000 の倍数はその秒を出し、それ以外は小数点以下を切り上げた秒を出す。
- * 対応機能ID（トレーサビリティ）： UNIT-006, REQ-004, REQ-005
+ * 戻り値： 分:秒 形式の文字列（例: "1:01", "0:00"）。
+ * 引数： ms は残時間（ミリ秒）。
+ * 関数の概要： 残ミリ秒を 1000 で割った切り上げ秒数を 分:秒 文字列へ変換する。
+ * 対応機能ID（トレーサビリティ）： UNIT-005, REQ-004, REQ-005
  */
 export function formatRemaining(ms) {
-  const safe = ms < 0 ? 0 : ms;
-  const seconds = safe % 1000 === 0 ? safe / 1000 : Math.ceil(safe / 1000);
-  const minute = Math.floor(seconds / 60);
-  const second = seconds % 60;
-  return minute + ":" + String(second).padStart(2, "0");
+  if (ms <= 0) {
+    return "0:00";
+  }
+
+  // 1000 で割り切れる場合は商の整数秒、端数がある場合は切り上げる。
+  const totalSeconds = Math.ceil(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 /**
  * 関数名： beaconZone
- * 戻り値： blue-solid、blue-blink、red-blink、zero のいずれか。
- * 引数： ms は残時間。単位はミリ秒。
- * 関数の概要： 表示上の秒ではなく、残時間のミリ秒で色の区分を決める。
- * 対応機能ID（トレーサビリティ）： UNIT-006, REQ-004, REQ-005
+ * 戻り値： 'blue-solid' | 'red-blink' | 'off'。
+ * 引数： ms は残時間（ミリ秒）。
+ * 関数の概要： 残時間に応じたカラービーコンの色・点滅区分を返す。
+ * 対応機能ID（トレーサビリティ）： UNIT-005, REQ-004, REQ-005
  */
 export function beaconZone(ms) {
-  if (ms <= 0) {
-    return "zero";
+  // 60000ミリ秒より長い場合は青色点灯、60000以下かつ0超は赤色点滅、0以下は消灯。
+  if (ms > ZONE_RED_MS) {
+    return "blue-solid";
   }
-  if (ms <= ZONE_RED_MS) {
+  if (ms > 0) {
     return "red-blink";
   }
-  if (ms <= ZONE_BLUE_BLINK_MS) {
-    return "blue-blink";
-  }
-  return "blue-solid";
+  return "off";
 }

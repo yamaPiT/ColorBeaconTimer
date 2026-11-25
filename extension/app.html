@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- UNIT-010 / REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007 -->
 <html lang="ja">
 <head>
   <meta charset="utf-8">
@@ -6,17 +7,32 @@
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
-  <div id="app">
-    <canvas id="stage" width="480" height="720"></canvas>
-    <div id="beacon"></div>
-    <p id="signature"></p>
-    <p id="time"></p>
-    <div id="controls">
-      <button id="minus" type="button">−</button>
-      <button id="sortie" type="button">ジュワッチ！</button>
-      <button id="plus" type="button">＋</button>
-    </div>
-    <img id="earth" alt="" src="assets/images/earth.jpg">
+  <div id="app" data-state="opening" data-dots-active="false">
+    <section id="opening-stage">
+      <h1 id="opening-title" hidden></h1>
+      <img id="opening-image" src="" alt="" hidden>
+      <img id="opening-lamp" src="assets/images/blue-lamp.svg" alt="立体青色ランプ / 3D Blue Lamp" hidden>
+      <div id="opening-text" class="opening-text-center">このソフトウェアは、 DADA（Document-and-Agent-Driven Agile）プロセスで開発しました。&#10;&#10;This software was developed using the DADA (Document-and-Agent-Driven Agile) process.</div>
+      <div id="opening-nav">
+        <button id="btn-opening-back" type="button" hidden>Back</button>
+        <button id="btn-opening-next" type="button">NEXT</button>
+      </div>
+    </section>
+
+    <main id="timer-ui" hidden>
+      <div id="beacon" class="beacon-blue beacon-lit">
+        <img id="beacon-lamp" src="assets/images/blue-lamp.svg" alt="カラービーコン / Color Beacon">
+      </div>
+      <p id="time">2:00</p>
+      <div id="controls">
+        <button id="btn-minus" type="button">−</button>
+        <button id="btn-start" type="button">スタート / START</button>
+        <button id="btn-plus" type="button">＋</button>
+      </div>
+    </main>
+
+    <canvas id="dots-canvas" width="700" height="720" hidden></canvas>
+    <button id="btn-exit" type="button" hidden>EXIT</button>
   </div>
   <script type="module" src="src/app/main.js"></script>
 </body>

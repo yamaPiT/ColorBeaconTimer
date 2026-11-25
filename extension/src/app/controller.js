@@ -1,594 +1,709 @@
 /**
  * ファイル名： controller.js
- * バージョン番号： 1.0.0
- * 作成日： 2026-11-13
+ * バージョン番号： 4.4.0
+ * 作成日： 2026-11-22
  * プログラマ名： Phase 4 生成担当
- * ファイルの概要： 1フレームごとに計算ユニットを呼び、音と描画へ結果を渡す。
- * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-007
+ * ファイルの概要： 1フレームごとの状態遷移、オープニング手動前後遷移・BGM同期制御（gain記録含む）・第5シーン拡大制御、長押し早送り、点滅周期、音声再生、EXIT終了制御、描画を統合制御する。
+ * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-007
  */
 
-import { nextState, INITIAL_STATE } from "../domain/app-state.js";
-import { openingStep } from "../domain/opening-timeline.js";
-import { adjustSetting } from "../domain/setting-time.js";
-import { sortieStep } from "../domain/sortie-timeline.js";
-import { beaconZone, formatRemaining, remainingMs } from "../domain/remaining-time.js";
-import { bluePhase, redIntervalSec } from "../domain/blink-interval.js";
-import { earthDiameterPx, mulberry32, starPositions } from "../domain/ending-timeline.js";
 import {
-  BLUE_PHASE_MS,
-  EARTH_POINT_PX,
-  HOLD_REPEAT_MS,
+  ENDING_DOT_COUNT,
+  LONG_PRESS_DELAY_MS,
   SETTING_INITIAL_MS,
-  SETTING_STEP_MS,
+  WINDOW_H,
+  WINDOW_W,
 } from "../domain/constants.js";
+import { nextState } from "../domain/app-state.js";
+import { openingFrame, stepOpeningScene } from "../domain/opening-timeline.js";
+import { adjustSetting, longPressRepeatSteps } from "../domain/setting-time.js";
+import {
+  beaconZone,
+  formatRemaining,
+  remainingMs,
+} from "../domain/remaining-time.js";
+import { redPhaseDurationMs } from "../domain/blink-interval.js";
+import { createDotField, dotPositions } from "../domain/ending-dots.js";
+
+/** オープニング以外の状態で使用する既定のオープニング情報 */
+const IDLE_OPENING_INFO = {
+  step: "",
+  sceneIndex: 0,
+  scale: 1,
+  imageKind: "none",
+  bgmTrack: "none",
+  showBack: false,
+  showNext: false,
+};
 
 /**
  * 関数名： createController
- * 戻り値： tick、pointer、ready を持つコントローラ。
- * 引数： clock は nowMs。audioPort は音。view は描画。scheduler は set と clear。
- * 関数の概要： 注入された時計で状態を進め、失敗した掛け声は終了演出へ渡す。
- * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-007
+ * 戻り値： { onOpeningNext, onOpeningBack, onClickScreen, onAdjust, onAdjustPressStart, onAdjustPressEnd, onStart, onExit, tick, setJuwacchiUrl }。
+ * 引数： clock（nowMs()）、audioPort（resume, playPicon, loadJuwacchi, playJuwacchi, playOpeningBgm, stopOpeningBgm）、view（render）、random01（乱数関数）、windowPort（任意の専用ウィンドウ操作ポート { close }）。
+ * 関数の概要： 専用ウィンドウのフレーム制御コントローラを生成する。
+ * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-007
  */
-export function createController(clock, audioPort, view, scheduler) {
-  const model = {
-    mode: INITIAL_STATE,
-    settingMs: SETTING_INITIAL_MS,
-    originMs: null,
-    phaseStartMs: 0,
-    countdownStartMs: 0,
-    shrinkStartMs: 0,
-    starsStartMs: 0,
-    blueStartMs: null,
-    blueCycle: -1,
-    blueOpen: null,
-    blink: null,
-    blinkLog: [],
-    marks: [],
-    holdId: null,
-    shoutReady: null,
-    shoutUrl: "",
-    shoutBytes: null,
-    shoutStarted: false,
-    shoutDone: false,
-    pointMarked: false,
-    shownOpening: false,
-    shownSetting: false,
+export function createController(clock, audioPort, view, random01, windowPort = null) {
+  let state = "opening";
+  let openingScene = 1;
+  let scene5StartMs = null;
+  let settingMs = SETTING_INITIAL_MS;
+  let countdownStartMs = 0;
+  let endingDotsStartMs = 0;
+  let lastDisplayTime = formatRemaining(settingMs);
+  let juwacchiUrl = "";
+  let blinkCycle = null;
+  let activePress = null;
+
+  /** オープニング BGM の現在再生状態・URL・非同期世代管理 */
+  let openingBgmTrack = "none";
+  let openingBgmUrl = "";
+  let pendingBgmTrack = "none";
+  let bgmGeneration = 0;
+  const openingBgmLog = [];
+
+  /** 赤色点滅の周期記録配列 */
+  const blinkLog = [];
+
+  /** 計測用の印（performance.now() 記録） */
+  const marks = {
+    "time-changes": [],
   };
 
-  // 起動時に保存ファイルを1回だけ読む。実行のたびに合成しない。
-  const ready = Promise.resolve()
-    .then(() => audioPort.loadShout())
-    .then((loaded) => {
-      if (loaded && loaded !== "ShoutUnavailable" && loaded.bytes) {
-        model.shoutReady = true;
-        model.shoutUrl = String(loaded.url || "");
-        model.shoutBytes = loaded.bytes;
-        return;
-      }
-      model.shoutReady = false;
-      model.shoutUrl = "";
-    })
-    .catch(() => {
-      model.shoutReady = false;
-      model.shoutUrl = "";
-    });
+  /** 終了演出用ドット群 */
+  const dotField = createDotField(ENDING_DOT_COUNT, random01);
 
-  /**
-   * 関数名： mark
-   * 戻り値： なし。
-   * 引数： name は印の名前。
-   * 関数の概要： performance.now() の時点を印として残す。
-   * 対応機能ID（トレーサビリティ）： UNIT-012
-   */
-  function mark(name) {
-    const stamp = typeof performance !== "undefined" && performance.now
-      ? performance.now()
-      : clock.nowMs();
-    model.marks.push({ name, t: stamp });
+  // 起動時にジュワッチ音声のプリロードを開始する。
+  if (audioPort && typeof audioPort.loadJuwacchi === "function") {
+    Promise.resolve(audioPort.loadJuwacchi())
+      .then((res) => {
+        if (res && res.ok && res.url) {
+          juwacchiUrl = res.url;
+        }
+      })
+      .catch(() => {});
   }
 
   /**
-   * 関数名： stopHold
+   * 関数名： buildViewModelAndRender
    * 戻り値： なし。
-   * 引数： なし。
-   * 関数の概要： 長押しの繰り返しを止める。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-002
+   * 引数： now は現在時刻（ミリ秒）、openingInfo はオープニング計算結果、remMs は残時間、beaconColor はランプ色、beaconLit は点灯状態。
+   * 関数の概要： ViewModel を組み立てて view.render へ渡す。
+   * 対応機能ID（トレーサビリティ）： UNIT-011
    */
-  function stopHold() {
-    if (model.holdId != null) {
-      scheduler.clear(model.holdId);
-      model.holdId = null;
-    }
-  }
+  function buildViewModelAndRender(now, openingInfo, remMs, beaconColor, beaconLit) {
+    const isOpening = state === "opening";
+    const isSetting = state === "setting";
+    const isEndingDots = state === "endingDots";
+    const dots = isEndingDots
+      ? dotPositions(
+          dotField,
+          now - endingDotsStartMs,
+          WINDOW_W / 2,
+          WINDOW_H / 2,
+          WINDOW_W,
+          WINDOW_H
+        )
+      : [];
 
-  /**
-   * 関数名： applyDelta
-   * 戻り値： なし。
-   * 引数： delta は設定時刻へ足すミリ秒。
-   * 関数の概要： 設定中だけ設定時刻を1秒変え、範囲外はクランプする。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-002
-   */
-  function applyDelta(delta) {
-    if (model.mode !== "setting") {
-      return;
-    }
-    model.settingMs = adjustSetting(model.settingMs, delta);
-  }
-
-  /**
-   * 関数名： startHold
-   * 戻り値： なし。
-   * 引数： delta は繰り返す増減。単位はミリ秒。
-   * 関数の概要： 押した時点で1回変え、その後 300 ミリ秒ごとに同じ方向へ変える。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-002
-   */
-  function startHold(delta) {
-    stopHold();
-    applyDelta(delta);
-    const repeat = () => {
-      applyDelta(delta);
-      model.holdId = scheduler.set(repeat, HOLD_REPEAT_MS);
+    const viewModel = {
+      state,
+      openingStep: isOpening ? openingInfo.step : "",
+      openingSceneIndex: isOpening ? (openingInfo.sceneIndex ?? 0) : 0,
+      openingImageKind: isOpening ? (openingInfo.imageKind ?? "none") : "none",
+      openingScale: isOpening ? openingInfo.scale : 1,
+      openingBackVisible: isOpening ? Boolean(openingInfo.showBack) : false,
+      openingNextVisible: isOpening ? Boolean(openingInfo.showNext) : false,
+      openingBgmTrack,
+      openingBgmUrl,
+      openingBgmLog,
+      settingMs,
+      remainingMs: remMs,
+      displayTime: isSetting
+        ? formatRemaining(settingMs)
+        : formatRemaining(remMs),
+      timeVisible: !isOpening && !isEndingDots,
+      buttonsVisible: !isOpening && !isEndingDots,
+      buttonsDisabled: !isSetting,
+      beaconColor,
+      beaconLit,
+      dots,
+      exitVisible: isEndingDots,
+      juwacchiUrl,
+      blinkLog,
+      marks,
     };
-    model.holdId = scheduler.set(repeat, HOLD_REPEAT_MS);
+
+    view.render(viewModel);
   }
 
   /**
-   * 関数名： enter
-   * 戻り値： 遷移したかどうか。
-   * 引数： event は nextState へ渡すきっかけ。now は現在のミリ秒。
-   * 関数の概要： 次の状態が変わったときだけ、その状態の開始時刻と印を付ける。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-001, REQ-003, REQ-005, REQ-007
-   */
-  function enter(event, now) {
-    const next = nextState(model.mode, event);
-    if (next === model.mode) {
-      return false;
-    }
-    model.mode = next;
-    model.phaseStartMs = now;
-    if (next === "setting" && !model.shownSetting) {
-      mark("setting-shown");
-      model.shownSetting = true;
-      stopHold();
-    }
-    if (next === "sortie") {
-      mark("sortie-started");
-      stopHold();
-      audioPort.resume();
-    }
-    if (next === "countdown") {
-      mark("countdown-started");
-      model.countdownStartMs = now;
-      model.blink = null;
-      model.blueStartMs = null;
-      model.blueCycle = -1;
-      model.blueOpen = null;
-    }
-    if (next === "shout") {
-      mark("shout-started");
-      beginShout();
-    }
-    if (next === "shrink") {
-      mark("shrink-started");
-      model.shrinkStartMs = now;
-    }
-    if (next === "stars") {
-      mark("stars-started");
-      model.starsStartMs = now;
-    }
-    return true;
-  }
-
-  /**
-   * 関数名： beginShout
+   * 関数名： resumeAudioSync
    * 戻り値： なし。
    * 引数： なし。
-   * 関数の概要： 保存ファイルを1回再生し、終了か失敗で縮小へ進める印を付ける。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-005
+   * 関数の概要： ユーザージェスチャ内で同期的に audioPort.resume() を呼び出し、失敗時も例外を送出しない。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001, REQ-004, REQ-005
    */
-  function beginShout() {
-    if (model.shoutStarted) {
+  function resumeAudioSync() {
+    if (!audioPort || typeof audioPort.resume !== "function") {
       return;
     }
-    model.shoutStarted = true;
-    Promise.resolve()
-      .then(() => audioPort.playShout(model.shoutBytes, 0))
-      .then((source) => {
-        if (source === "ShoutUnavailable" || !source) {
-          model.shoutDone = true;
+    try {
+      Promise.resolve(audioPort.resume()).catch(() => {});
+    } catch {
+      // 音声デバイス不可時は無音フォールバックとして継続する。
+    }
+  }
+
+  /**
+   * 関数名： renderCurrentSnapshot
+   * 戻り値： なし。
+   * 引数： now は現在時刻（ミリ秒）。
+   * 関数の概要： 非同期 BGM 読込完了時に現在の画面状態に応じた最新 ViewModel を再描画する。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001
+   */
+  function renderCurrentSnapshot(now) {
+    if (state === "opening") {
+      const scene5Elapsed =
+        openingScene === 5 && scene5StartMs != null ? now - scene5StartMs : 0;
+      const info = openingFrame(openingScene, scene5Elapsed);
+      buildViewModelAndRender(now, info, settingMs, "blue", true);
+    } else if (state === "setting") {
+      buildViewModelAndRender(now, IDLE_OPENING_INFO, settingMs, "blue", true);
+    }
+  }
+
+  /**
+   * 関数名： syncOpeningBgm
+   * 戻り値： なし。
+   * 引数： bgmTrack は遷移先シーンの BGM 識別子（'none' | 'scene2' | 'scene3'）、now は操作時刻（ミリ秒）。
+   * 関数の概要： 旧シーンの BGM を即座に停止したうえで、対象トラックが scene2 / scene3 ならループ再生を開始する。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001
+   */
+  function syncOpeningBgm(bgmTrack, now) {
+    bgmGeneration += 1;
+    const myGen = bgmGeneration;
+    const prevTrack = openingBgmTrack;
+    const prevPending = pendingBgmTrack;
+
+    // 遷移前の BGM を即座に停止する。
+    if (audioPort && typeof audioPort.stopOpeningBgm === "function") {
+      try {
+        audioPort.stopOpeningBgm();
+      } catch {
+        // 停止時例外は無視し、無音状態へ戻す。
+      }
+    }
+
+    openingBgmTrack = "none";
+    openingBgmUrl = "";
+    pendingBgmTrack = "none";
+
+    if (prevTrack !== "none" || prevPending !== "none") {
+      const stoppedAt = clock.nowMs();
+      const stoppedTrack = prevTrack !== "none" ? prevTrack : prevPending;
+      marks["opening-bgm-stopped"] = stoppedAt;
+      openingBgmLog.push({
+        action: "stop",
+        trackKey: stoppedTrack,
+        atMs: stoppedAt,
+        activeCount: 0,
+        loop: false,
+        gain: 0,
+      });
+    }
+
+    if (bgmTrack !== "scene2" && bgmTrack !== "scene3") {
+      return;
+    }
+
+    if (!audioPort || typeof audioPort.playOpeningBgm !== "function") {
+      openingBgmLog.push({
+        action: "fallback",
+        trackKey: bgmTrack,
+        atMs: now,
+        activeCount: 0,
+        loop: false,
+        gain: 0,
+        error: "BgmUnavailable",
+      });
+      return;
+    }
+
+    pendingBgmTrack = bgmTrack;
+    let playPromise;
+    try {
+      playPromise = Promise.resolve(audioPort.playOpeningBgm(bgmTrack));
+    } catch {
+      pendingBgmTrack = "none";
+      openingBgmTrack = "none";
+      openingBgmUrl = "";
+      const errAt = clock.nowMs();
+      openingBgmLog.push({
+        action: "fallback",
+        trackKey: bgmTrack,
+        atMs: errAt,
+        activeCount: 0,
+        loop: false,
+        gain: 0,
+        error: "BgmUnavailable",
+      });
+      return;
+    }
+
+    playPromise
+      .then((res) => {
+        if (myGen !== bgmGeneration) {
           return;
         }
-        source.onended = () => {
-          model.shoutDone = true;
-        };
-        if (source.buffer && source.buffer.duration) {
-          const durMs = Math.ceil(source.buffer.duration * 1000);
-          scheduler.set(() => {
-            model.shoutDone = true;
-          }, durMs);
+        pendingBgmTrack = "none";
+
+        // 読込完了時点で opening 以外、または別トラックのシーンへ移動していた場合は即時停止する。
+        const currentTrack =
+          state === "opening" ? openingFrame(openingScene, 0).bgmTrack : "none";
+        if (state !== "opening" || currentTrack !== bgmTrack) {
+          if (audioPort && typeof audioPort.stopOpeningBgm === "function") {
+            try {
+              audioPort.stopOpeningBgm();
+            } catch {
+              // 停止時例外は無視する。
+            }
+          }
+          openingBgmTrack = "none";
+          openingBgmUrl = "";
+          return;
+        }
+
+        const doneAt = clock.nowMs();
+        const count =
+          typeof audioPort.getOpeningBgmCount === "function"
+            ? audioPort.getOpeningBgmCount()
+            : res && res.ok
+              ? 1
+              : 0;
+
+        if (res && res.ok) {
+          openingBgmTrack = bgmTrack;
+          openingBgmUrl = res.url || "";
+          marks["opening-bgm-started"] = doneAt;
+          openingBgmLog.push({
+            action: "play",
+            trackKey: bgmTrack,
+            atMs: doneAt,
+            activeCount: count,
+            loop: true,
+            gain: typeof res.gain === "number" ? res.gain : 1.0,
+          });
+          renderCurrentSnapshot(doneAt);
+        } else if (res && res.cancelled) {
+          // 既に新しい遷移でキャンセル済みのため記録しない。
+        } else {
+          openingBgmTrack = "none";
+          openingBgmUrl = "";
+          openingBgmLog.push({
+            action: "fallback",
+            trackKey: bgmTrack,
+            atMs: doneAt,
+            activeCount: count,
+            loop: false,
+            gain: 0,
+            error: (res && res.error) || "BgmUnavailable",
+          });
+          renderCurrentSnapshot(doneAt);
         }
       })
       .catch(() => {
-        model.shoutDone = true;
+        if (myGen !== bgmGeneration) {
+          return;
+        }
+        pendingBgmTrack = "none";
+        openingBgmTrack = "none";
+        openingBgmUrl = "";
+        const errAt = clock.nowMs();
+        openingBgmLog.push({
+          action: "fallback",
+          trackKey: bgmTrack,
+          atMs: errAt,
+          activeCount: 0,
+          loop: false,
+          gain: 0,
+          error: "BgmUnavailable",
+        });
+        renderCurrentSnapshot(errAt);
       });
   }
 
   /**
-   * 関数名： pushBlink
+   * 関数名： enterEndingDots
    * 戻り値： なし。
-   * 引数： record は点滅1件。
-   * 関数の概要： 完了した点滅を観測用の記録へ追加する。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-004
+   * 引数： now は現在時刻（ミリ秒）、event は 'AUDIO_DONE' または 'AUDIO_UNAVAILABLE'。
+   * 関数の概要： 終了ドット演出状態へ遷移し、開始印を記録して描画する。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-005, REQ-007
    */
-  function pushBlink(record) {
-    model.blinkLog.push(record);
-  }
-
-  /**
-   * 関数名： closeBlue
-   * 戻り値： なし。
-   * 引数： now は現在時刻。truncated は残時間 0 で打ち切ったとき true。
-   * 関数の概要： 開いている青のフェーズを、実測または打ち切りとして閉じる。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-004
-   */
-  function closeBlue(now, truncated) {
-    if (!model.blueOpen) {
+  function enterEndingDots(now, event) {
+    if (state !== "endingAudio") {
       return;
     }
-    const open = model.blueOpen;
-    model.blueOpen = null;
-    pushBlink({
-      startRemainingMs: open.startRemainingMs,
-      intervalMs: BLUE_PHASE_MS,
-      measuredMs: truncated ? null : Math.round(now - open.startedAt),
-      truncated,
-      phase: open.phase,
-      plannedMs: BLUE_PHASE_MS,
-    });
-  }
-
-  /**
-   * 関数名： openBlue
-   * 戻り値： なし。
-   * 引数： phase は fade-out または fade-in。remaining は開始時の残時間。now は現在時刻。
-   * 関数の概要： 青のフェーズを1件開き、前のフェーズが残っていれば閉じる。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-004
-   */
-  function openBlue(phase, remaining, now) {
-    if (model.blueOpen && model.blueOpen.phase === phase) {
-      return;
-    }
-    closeBlue(now, false);
-    model.blueOpen = { phase, startRemainingMs: remaining, startedAt: now };
-  }
-
-  /**
-   * 関数名： closeRed
-   * 戻り値： なし。
-   * 引数： now は現在時刻。truncated は打ち切りのとき true。
-   * 関数の概要： 開いている赤の点滅を閉じる。打ち切りの実測は残さない。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-004
-   */
-  function closeRed(now, truncated) {
-    if (!model.blink || model.blink.kind !== "red" || model.blink.closed) {
-      return;
-    }
-    model.blink.closed = true;
-    pushBlink({
-      startRemainingMs: model.blink.startRemainingMs,
-      intervalMs: model.blink.intervalMs,
-      measuredMs: truncated ? null : Math.round(now - model.blink.startedAt),
-      truncated,
-      phase: "red",
-      plannedMs: model.blink.intervalMs,
-    });
-  }
-
-  /**
-   * 関数名： startRed
-   * 戻り値： なし。
-   * 引数： remaining は開始時の残時間。now は現在時刻。
-   * 関数の概要： その時点の残時間で間隔を計算し、点滅の開始時にピコンを1回鳴らす。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-004
-   */
-  function startRed(remaining, now) {
-    const seconds = redIntervalSec(remaining);
-    const intervalMs = Math.round(seconds * 1000);
-    model.blink = {
-      kind: "red",
-      startRemainingMs: remaining,
-      intervalMs,
-      startedAt: now,
-      closed: false,
-    };
-    audioPort.playPicon();
-    mark("blink-started");
-  }
-
-  /**
-   * 関数名： updateCountdownAudio
-   * 戻り値： ビーコンの色名と不透明度。
-   * 引数： remaining は残時間。now は現在時刻。
-   * 関数の概要： 区分に合わせて青の点灯、青のフェード、赤の点滅とピコンを進める。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-004
-   */
-  function updateCountdownAudio(remaining, now) {
-    const zone = beaconZone(remaining);
-    if (zone === "zero") {
-      closeBlue(now, true);
-      closeRed(now, true);
-      return { beaconColor: "off", beaconOpacity: 0 };
-    }
-    if (zone === "blue-solid") {
-      closeBlue(now, false);
-      closeRed(now, false);
-      model.blueStartMs = null;
-      model.blueCycle = -1;
-      return { beaconColor: "blue", beaconOpacity: 1 };
-    }
-    if (zone === "blue-blink") {
-      closeRed(now, false);
-      if (model.blueStartMs === null) {
-        model.blueStartMs = now;
-        model.blueCycle = -1;
-      }
-      const elapsed = Math.max(0, now - model.blueStartMs);
-      const cycleLen = BLUE_PHASE_MS * 2;
-      const cycle = Math.floor(elapsed / cycleLen);
-      const inCycle = elapsed % cycleLen;
-      if (cycle !== model.blueCycle) {
-        // 周期の境は明るさが最大の時点なので、ピコンはここだけで1回鳴らす。
-        model.blueCycle = cycle;
-        audioPort.playPicon();
-        mark("blink-started");
-      }
-      const phase = bluePhase(inCycle);
-      openBlue(phase.phase, remaining, now);
-      return { beaconColor: "blue", beaconOpacity: phase.opacity };
-    }
-
-    // 赤へ入った最初の点滅は、入った時点の残時間で間隔を計算する。
-    closeBlue(now, false);
-    model.blueStartMs = null;
-    if (!model.blink || model.blink.kind !== "red" || model.blink.closed) {
-      startRed(remaining, now);
-    } else if (now - model.blink.startedAt >= model.blink.intervalMs) {
-      closeRed(now, false);
-      if (remaining > 0) {
-        startRed(remaining, now);
-      }
-    }
-    const into = now - model.blink.startedAt;
-    const lit = into < model.blink.intervalMs / 2;
-    return { beaconColor: "red", beaconOpacity: lit ? 1 : 0 };
-  }
-
-  /**
-   * 関数名： currentRemaining
-   * 戻り値： 残時間。単位はミリ秒。
-   * 引数： now は現在時刻。
-   * 関数の概要： 出撃前と出撃演出中は設定時刻のままにし、カウントダウン以降だけ減らす。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-003, REQ-004
-   */
-  function currentRemaining(now) {
-    if (model.mode === "countdown") {
-      const elapsed = Math.max(0, Math.floor(now - model.countdownStartMs));
-      return remainingMs(model.settingMs, elapsed);
-    }
-    if (model.mode === "shout" || model.mode === "shrink" || model.mode === "stars") {
-      return 0;
-    }
-    return model.settingMs;
-  }
-
-  /**
-   * 関数名： buildViewModel
-   * 戻り値： 描画へ渡す ViewModel。
-   * 引数： now は現在時刻。beacon は色と不透明度。
-   * 関数の概要： 状態ごとの表示、地球の直径、星の位置、観測用の記録をまとめる。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-001, REQ-003, REQ-004, REQ-005, REQ-007
-   */
-  function buildViewModel(now, beacon) {
-    const remaining = currentRemaining(now);
-    let displayTime = "";
-    let timeVisible = false;
-    let openingName = "";
-    let sortieName = "";
-    let openingElapsedMs = 0;
-    let sortieElapsedMs = 0;
-    let earth = 0;
-    let stars = [];
-    let buttonsVisible = false;
-    let beaconColor = beacon.beaconColor;
-    let beaconOpacity = beacon.beaconOpacity;
-
-    if (model.mode === "opening") {
-      openingElapsedMs = Math.max(0, now - model.phaseStartMs);
-      openingName = openingStep(openingElapsedMs);
-      if (openingName === "done") {
-        openingName = "expand";
-      }
-      beaconColor = "off";
-      beaconOpacity = 0;
-    } else if (model.mode === "setting") {
-      displayTime = formatRemaining(model.settingMs);
-      timeVisible = true;
-      buttonsVisible = true;
-      beaconColor = "blue";
-      beaconOpacity = 1;
-    } else if (model.mode === "sortie") {
-      displayTime = formatRemaining(model.settingMs);
-      timeVisible = true;
-      buttonsVisible = true;
-      sortieElapsedMs = Math.max(0, now - model.phaseStartMs);
-      sortieName = sortieStep(sortieElapsedMs);
-      if (sortieName === "done") {
-        sortieName = "land";
-      }
-      beaconColor = "off";
-      beaconOpacity = 0;
-    } else if (model.mode === "countdown") {
-      displayTime = formatRemaining(remaining);
-      timeVisible = true;
-      buttonsVisible = true;
-    } else if (model.mode === "shout") {
-      displayTime = "0:00";
-      timeVisible = true;
-      beaconColor = "off";
-      beaconOpacity = 0;
-    } else if (model.mode === "shrink") {
-      displayTime = "";
-      timeVisible = false;
-      earth = earthDiameterPx(Math.max(0, now - model.shrinkStartMs));
-      beaconColor = "off";
-      beaconOpacity = 0;
-    } else if (model.mode === "stars") {
-      displayTime = "";
-      timeVisible = false;
-      stars = starPositions(Math.max(0, now - model.starsStartMs), mulberry32(1));
-      beaconColor = "off";
-      beaconOpacity = 0;
-    }
-
-    const blinkLog = model.blinkLog.slice();
-    if (model.blink && model.blink.kind === "red" && !model.blink.closed) {
-      blinkLog.push({
-        startRemainingMs: model.blink.startRemainingMs,
-        intervalMs: model.blink.intervalMs,
-        measuredMs: null,
-        truncated: false,
-        phase: "red",
-        plannedMs: model.blink.intervalMs,
-      });
-    }
-
-    return {
-      state: model.mode,
-      settingMs: model.settingMs,
-      remainingMs: remaining,
-      displayTime,
-      timeVisible,
-      beaconColor,
-      beaconOpacity,
-      openingStep: openingName,
-      sortieStep: sortieName,
-      openingElapsedMs,
-      sortieElapsedMs,
-      earthDiameterPx: earth,
-      stars,
-      buttonsVisible,
-      shoutUrl: model.shoutUrl,
-      blinkLog,
-      marks: model.marks,
-    };
+    state = nextState(state, event);
+    endingDotsStartMs = now;
+    marks["ending-dots-started"] = now;
+    buildViewModelAndRender(now, IDLE_OPENING_INFO, 0, "off", false);
   }
 
   /**
    * 関数名： tick
    * 戻り値： なし。
    * 引数： なし。
-   * 関数の概要： 経過ミリ秒で状態を進め、ViewModel を描画へ渡す。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-001, REQ-003, REQ-004, REQ-005, REQ-007
+   * 関数の概要： 1フレーム分の状態更新・点滅制御・音声起動・描画を実行する。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001, REQ-003, REQ-004, REQ-005, REQ-007
    */
   function tick() {
     const now = clock.nowMs();
-    if (model.originMs === null) {
-      model.originMs = now;
-      model.phaseStartMs = now;
-    }
-    if (model.mode === "opening" && !model.shownOpening) {
-      mark("opening-shown");
-      model.shownOpening = true;
+
+    if (state === "opening") {
+      const scene5Elapsed =
+        openingScene === 5 && scene5StartMs != null ? now - scene5StartMs : 0;
+      const info = openingFrame(openingScene, scene5Elapsed);
+
+      if (info.step === "scene1" && marks["opening-start"] == null) {
+        marks["opening-start"] = now;
+      } else if (info.step === "done") {
+        syncOpeningBgm("none", now);
+        state = nextState(state, "OPENING_DONE");
+        marks["setting-shown"] = now;
+        buildViewModelAndRender(now, IDLE_OPENING_INFO, settingMs, "blue", true);
+        return;
+      }
+
+      buildViewModelAndRender(now, info, settingMs, "blue", true);
+      return;
     }
 
-    // 時間で進む遷移。ボタンの無視は pointer 側で行い、ここでは経過だけを見る。
-    if (model.mode === "opening") {
-      enter({ name: "tick", elapsedMs: now - model.phaseStartMs }, now);
-    } else if (model.mode === "sortie") {
-      enter({ name: "tick", elapsedMs: now - model.phaseStartMs }, now);
-    } else if (model.mode === "shout" && model.shoutDone) {
-      enter({ name: "shout-ended" }, now);
-    }
-
-    let beacon = { beaconColor: "off", beaconOpacity: 0 };
-    if (model.mode === "countdown") {
-      const remaining = currentRemaining(now);
-      if (remaining === 0) {
-        // 残時間 0 の打ち切りは、点滅の実測を待たずに次へ進む。
-        closeBlue(now, true);
-        closeRed(now, true);
-        if (model.shoutReady === true) {
-          enter({ name: "remaining-zero", canPlay: true }, now);
-        } else if (model.shoutReady === false) {
-          enter({ name: "remaining-zero", canPlay: false }, now);
+    if (state === "setting") {
+      if (activePress) {
+        const elapsed = now - activePress.startMs;
+        const steps = longPressRepeatSteps(elapsed, activePress.appliedRepeatCount);
+        if (steps > 0) {
+          settingMs = adjustSetting(settingMs, activePress.deltaMs * steps);
+          activePress.appliedRepeatCount += steps;
+          lastDisplayTime = formatRemaining(settingMs);
         }
-      } else {
-        beacon = updateCountdownAudio(remaining, now);
+      }
+      buildViewModelAndRender(now, IDLE_OPENING_INFO, settingMs, "blue", true);
+      return;
+    }
+
+    if (state === "countdown") {
+      const rem = remainingMs(settingMs, now - countdownStartMs);
+      const disp = formatRemaining(rem);
+      if (disp !== lastDisplayTime) {
+        lastDisplayTime = disp;
+        marks["time-changes"].push(now);
+      }
+
+      // 残時間 0 到達時は点滅を打ち切り、ピコン音とジュワッチ音声を再生する。
+      if (rem <= 0) {
+        if (blinkCycle) {
+          const cycleElapsed = now - blinkCycle.startMs;
+          blinkLog.push({
+            startRemainingMs: blinkCycle.startRemainingMs,
+            plannedPhaseMs: blinkCycle.phaseMs,
+            litMs: Math.min(blinkCycle.phaseMs, cycleElapsed),
+            unlitMs: Math.max(0, cycleElapsed - blinkCycle.phaseMs),
+            truncated: true,
+          });
+          blinkCycle = null;
+        }
+
+        state = nextState(state, "TIMER_ZERO");
+        marks["ending-audio-started"] = now;
+        buildViewModelAndRender(now, IDLE_OPENING_INFO, 0, "off", false);
+
+        if (audioPort && typeof audioPort.playPicon === "function") {
+          audioPort.playPicon();
+        }
+
+        if (audioPort && typeof audioPort.playJuwacchi === "function") {
+          const res = audioPort.playJuwacchi(() => {
+            enterEndingDots(clock.nowMs(), "AUDIO_DONE");
+          });
+          if (!res || !res.ok) {
+            enterEndingDots(clock.nowMs(), "AUDIO_UNAVAILABLE");
+          }
+        } else {
+          enterEndingDots(clock.nowMs(), "AUDIO_UNAVAILABLE");
+        }
+        return;
+      }
+
+      const zone = beaconZone(rem);
+      if (zone === "blue-solid") {
+        buildViewModelAndRender(now, IDLE_OPENING_INFO, rem, "blue", true);
+        return;
+      }
+
+      // 赤色点滅区間の周期制御を行う。
+      if (!blinkCycle) {
+        blinkCycle = {
+          startMs: now,
+          startRemainingMs: rem,
+          phaseMs: redPhaseDurationMs(rem),
+          piconPlayed: false,
+        };
+      }
+
+      let cycleElapsed = now - blinkCycle.startMs;
+      if (cycleElapsed >= blinkCycle.phaseMs * 2) {
+        blinkLog.push({
+          startRemainingMs: blinkCycle.startRemainingMs,
+          plannedPhaseMs: blinkCycle.phaseMs,
+          litMs: blinkCycle.phaseMs,
+          unlitMs: cycleElapsed - blinkCycle.phaseMs,
+          truncated: false,
+        });
+        blinkCycle = {
+          startMs: now,
+          startRemainingMs: rem,
+          phaseMs: redPhaseDurationMs(rem),
+          piconPlayed: false,
+        };
+        cycleElapsed = 0;
+      }
+
+      let beaconLit = true;
+      let shouldPlayPicon = false;
+      if (cycleElapsed >= blinkCycle.phaseMs) {
+        beaconLit = false;
+        if (!blinkCycle.piconPlayed) {
+          blinkCycle.piconPlayed = true;
+          shouldPlayPicon = true;
+        }
+      }
+
+      buildViewModelAndRender(now, IDLE_OPENING_INFO, rem, "red", beaconLit);
+      if (shouldPlayPicon && audioPort && typeof audioPort.playPicon === "function") {
+        audioPort.playPicon();
+      }
+      return;
+    }
+
+    if (state === "endingAudio") {
+      buildViewModelAndRender(now, IDLE_OPENING_INFO, 0, "off", false);
+      return;
+    }
+
+    // endingDots 状態
+    buildViewModelAndRender(now, IDLE_OPENING_INFO, 0, "off", false);
+  }
+
+  /**
+   * 関数名： onOpeningNext
+   * 戻り値： なし。
+   * 引数： なし。
+   * 関数の概要： 同期的に音声再生許可を有効化したうえで次シーンへ進み、BGM 切替と第5シーン拡大計測を開始する。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001
+   */
+  function onOpeningNext() {
+    if (state !== "opening") {
+      return;
+    }
+    // ユーザージェスチャ有効期間内に同期で AudioContext.resume() を実行する。
+    resumeAudioSync();
+
+    const nextScene = stepOpeningScene(openingScene, "next");
+    if (nextScene === openingScene) {
+      return;
+    }
+    openingScene = nextScene;
+    const now = clock.nowMs();
+
+    if (openingScene === 2 && marks["opening-scene2"] == null) {
+      marks["opening-scene2"] = now;
+    } else if (openingScene === 3 && marks["opening-scene3"] == null) {
+      marks["opening-scene3"] = now;
+    } else if (openingScene === 4 && marks["opening-scene4"] == null) {
+      marks["opening-scene4"] = now;
+    } else if (openingScene === 5) {
+      scene5StartMs = now;
+      if (marks["opening-scene5"] == null) {
+        marks["opening-scene5"] = now;
       }
     }
 
-    if (model.mode === "shrink" && !model.pointMarked) {
-      const diameter = earthDiameterPx(Math.max(0, now - model.shrinkStartMs));
-      if (diameter <= EARTH_POINT_PX) {
-        mark("point-reached");
-        model.pointMarked = true;
-      }
+    const info = openingFrame(openingScene, 0);
+    syncOpeningBgm(info.bgmTrack, now);
+    buildViewModelAndRender(now, info, settingMs, "blue", true);
+  }
+
+  /**
+   * 関数名： onOpeningBack
+   * 戻り値： なし。
+   * 引数： なし。
+   * 関数の概要： 同期的に音声再生許可を有効化したうえで前シーンへ戻り、BGM を切り替える。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001
+   */
+  function onOpeningBack() {
+    if (state !== "opening") {
+      return;
     }
+    resumeAudioSync();
 
-    const viewModel = buildViewModel(now, beacon);
-    view.render(viewModel);
+    const prevScene = stepOpeningScene(openingScene, "back");
+    if (prevScene === openingScene) {
+      return;
+    }
+    openingScene = prevScene;
+    const now = clock.nowMs();
+    const info = openingFrame(openingScene, 0);
+    syncOpeningBgm(info.bgmTrack, now);
+    buildViewModelAndRender(now, info, settingMs, "blue", true);
+  }
 
-    // 点のフレームを1枚描いてから、次のフレームで星へ進む。
-    if (model.mode === "shrink" && model.pointMarked) {
-      enter({ name: "tick", diameterPx: viewModel.earthDiameterPx }, now);
+  /**
+   * 関数名： onClickScreen
+   * 戻り値： なし。
+   * 引数： なし。
+   * 関数の概要： オープニング第5シーン再生中の画面クリックのみを受け付け、BGM 停止を維持して即座に設定画面へスキップする。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001
+   */
+  function onClickScreen() {
+    if (state !== "opening" || openingScene !== 5) {
+      return;
+    }
+    const now = clock.nowMs();
+    syncOpeningBgm("none", now);
+    state = nextState(state, "SKIP_OPENING");
+    marks["setting-shown"] = now;
+    buildViewModelAndRender(now, IDLE_OPENING_INFO, settingMs, "blue", true);
+  }
+
+  /**
+   * 関数名： onAdjust
+   * 戻り値： なし。
+   * 引数： deltaMs は増減するミリ秒。
+   * 関数の概要： 設定画面での時刻増減を受け付ける。カウントダウン中以降は無視する。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-002, REQ-003
+   */
+  function onAdjust(deltaMs) {
+    if (state !== "setting") {
+      return;
+    }
+    settingMs = adjustSetting(settingMs, deltaMs);
+    lastDisplayTime = formatRemaining(settingMs);
+    buildViewModelAndRender(clock.nowMs(), IDLE_OPENING_INFO, settingMs, "blue", true);
+  }
+
+  /**
+   * 関数名： onAdjustPressStart
+   * 戻り値： なし。
+   * 引数： deltaMs は 1 ステップあたりの増減ミリ秒。
+   * 関数の概要： ＋/−ボタン押下開始を受け付け、長押し早送りの計測を開始する。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-002
+   */
+  function onAdjustPressStart(deltaMs) {
+    if (state !== "setting") {
+      return;
+    }
+    activePress = {
+      deltaMs,
+      startMs: clock.nowMs(),
+      appliedRepeatCount: 0,
+    };
+  }
+
+  /**
+   * 関数名： onAdjustPressEnd
+   * 戻り値： なし。
+   * 引数： cancelled はポインタ外移動やキャンセルによる中断かどうか（既定値 false）。
+   * 関数の概要： ＋/−ボタンの押下終了を受け付け、2秒未満かつ早送り未発動のときのみ単押しを適用する。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-002
+   */
+  function onAdjustPressEnd(cancelled = false) {
+    if (!activePress) {
+      return;
+    }
+    const press = activePress;
+    activePress = null;
+    if (state !== "setting" || cancelled) {
+      return;
+    }
+    const elapsed = clock.nowMs() - press.startMs;
+    if (elapsed < LONG_PRESS_DELAY_MS && press.appliedRepeatCount === 0) {
+      onAdjust(press.deltaMs);
     }
   }
 
   /**
-   * 関数名： pointer
+   * 関数名： onStart
    * 戻り値： なし。
-   * 引数： phase は down、up、cancel。targetId は押した要素の id。
-   * 関数の概要： オープニングの最初の押下でスキップし、設定中だけ時刻と出撃を受ける。
-   * 対応機能ID（トレーサビリティ）： UNIT-012, REQ-001, REQ-002, REQ-003
+   * 引数： なし。
+   * 関数の概要： スタートボタン押下を受け付け、BGM 停止と AudioContext 有効化を行いカウントダウンを開始する。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-003, REQ-004, REQ-005
    */
-  function pointer(phase, targetId) {
+  function onStart() {
+    if (state !== "setting") {
+      return;
+    }
+    activePress = null;
     const now = clock.nowMs();
-    if (model.originMs === null) {
-      model.originMs = now;
-      model.phaseStartMs = now;
+    syncOpeningBgm("none", now);
+    resumeAudioSync();
+    state = nextState(state, "START");
+    countdownStartMs = now;
+    lastDisplayTime = formatRemaining(settingMs);
+    marks["countdown-started"] = now;
+    marks["time-changes"] = [now];
+    blinkCycle = null;
+
+    const zone = beaconZone(settingMs);
+    const initialColor = zone === "red-blink" ? "red" : "blue";
+    if (zone === "red-blink") {
+      blinkCycle = {
+        startMs: now,
+        startRemainingMs: settingMs,
+        phaseMs: redPhaseDurationMs(settingMs),
+        piconPlayed: false,
+      };
     }
-    if (phase === "up" || phase === "cancel") {
-      stopHold();
+    buildViewModelAndRender(now, IDLE_OPENING_INFO, settingMs, initialColor, true);
+  }
+
+  /**
+   * 関数名： onExit
+   * 戻り値： なし。
+   * 引数： なし。
+   * 関数の概要： 終了演出状態（endingDots）において EXIT ボタン押下を受け付け、無音確認・終了印記録・最新描画・専用ウィンドウ閉鎖を実行する。
+   * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-007
+   */
+  function onExit() {
+    if (state !== "endingDots") {
       return;
     }
-    if (model.mode === "opening") {
-      if (!model.shownOpening) {
-        mark("opening-shown");
-        model.shownOpening = true;
+    const now = clock.nowMs();
+    syncOpeningBgm("none", now);
+    marks["exit-clicked"] = now;
+    buildViewModelAndRender(now, IDLE_OPENING_INFO, 0, "off", false);
+    if (windowPort && typeof windowPort.close === "function") {
+      try {
+        windowPort.close();
+      } catch {
+        // ウィンドウ操作ポート例外時もエラーを送出せず正常終了状態を保つ。
       }
-      enter({ name: "click" }, now);
-      return;
-    }
-    if (model.mode !== "setting") {
-      // 出撃演出中とカウントダウン中のボタンは、状態を変えずに捨てる。
-      const name = targetId === "plus" || targetId === "minus" || targetId === "sortie"
-        ? targetId
-        : "ignored";
-      enter({ name }, now);
-      return;
-    }
-    if (targetId === "plus") {
-      startHold(SETTING_STEP_MS);
-      return;
-    }
-    if (targetId === "minus") {
-      startHold(-SETTING_STEP_MS);
-      return;
-    }
-    if (targetId === "sortie") {
-      enter({ name: "sortie" }, now);
     }
   }
 
-  return { tick, pointer, ready };
+  return {
+    onOpeningNext,
+    onOpeningBack,
+    onClickScreen,
+    onAdjust,
+    onAdjustPressStart,
+    onAdjustPressEnd,
+    onStart,
+    onExit,
+    tick,
+    setJuwacchiUrl(url) {
+      juwacchiUrl = url || "";
+    },
+  };
 }

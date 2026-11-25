@@ -1,80 +1,45 @@
 /**
  * ファイル名： app-state.js
- * バージョン番号： 1.0.0
- * 作成日： 2026-11-13
+ * バージョン番号： 2.0.0
+ * 作成日： 2026-11-16
  * プログラマ名： Phase 4 生成担当
- * ファイルの概要： 現在の画面状態とイベントから、次の状態を1つ返す。
+ * ファイルの概要： 現在の状態と発生イベントから次の画面状態を返す純粋関数を提供する。
  * 対応機能ID（トレーサビリティ）： UNIT-002, REQ-001, REQ-003, REQ-005, REQ-007
  */
 
-import { EARTH_POINT_PX, OPENING_MS, SORTIE_MS } from "./constants.js";
-
-/** 新しいページの初期状態。 */
-export const INITIAL_STATE = "opening";
+/** 状態遷移テーブル */
+const TRANSITIONS = Object.freeze({
+  opening: Object.freeze({
+    OPENING_DONE: "setting",
+    SKIP_OPENING: "setting",
+  }),
+  setting: Object.freeze({
+    START: "countdown",
+  }),
+  countdown: Object.freeze({
+    TIMER_ZERO: "endingAudio",
+  }),
+  endingAudio: Object.freeze({
+    AUDIO_DONE: "endingDots",
+    AUDIO_UNAVAILABLE: "endingDots",
+  }),
+  endingDots: Object.freeze({}),
+});
 
 /**
  * 関数名： nextState
- * 戻り値： 次の状態名。未知のイベントでは現在の状態名。
- * 引数： state は現在の状態名。event は name を持つオブジェクト。
- * 関数の概要： オープニング、出撃、カウントダウン、掛け声、終了演出の遷移を決める。
+ * 戻り値： 次の状態文字列（未知・無効イベント時は現在の state をそのまま返す）。
+ * 引数： state は現在の状態、event は発生イベント。
+ * 関数の概要： 状態遷移テーブルに従い、次の画面状態を純粋に計算する。
  * 対応機能ID（トレーサビリティ）： UNIT-002, REQ-001, REQ-003, REQ-005, REQ-007
  */
 export function nextState(state, event) {
-  // 形が違うイベントは状態を変えない。
-  if (!event || typeof event.name !== "string") {
+  // 現在の状態に対応する遷移先マップを取得する。
+  const table = TRANSITIONS[state];
+  if (!table) {
     return state;
   }
 
-  // オープニングは最初のクリック、または規定時間の経過で設定へ進む。
-  if (state === "opening") {
-    if (event.name === "click") {
-      return "setting";
-    }
-    if (event.name === "tick" && event.elapsedMs >= OPENING_MS) {
-      return "setting";
-    }
-    return state;
-  }
-
-  // 設定中だけ出撃ボタンを受け付ける。
-  if (state === "setting") {
-    if (event.name === "sortie") {
-      return "sortie";
-    }
-    return state;
-  }
-
-  // 出撃演出中のボタンは捨て、規定時間でカウントダウンへ進む。
-  if (state === "sortie") {
-    if (event.name === "tick" && event.elapsedMs >= SORTIE_MS) {
-      return "countdown";
-    }
-    return state;
-  }
-
-  // 残時間 0 のとき、再生できるなら掛け声、できないなら縮小へ進む。
-  if (state === "countdown") {
-    if (event.name === "remaining-zero") {
-      return event.canPlay ? "shout" : "shrink";
-    }
-    return state;
-  }
-
-  // 掛け声の終了と失敗は、どちらも縮小へ進む。
-  if (state === "shout") {
-    if (event.name === "shout-ended" || event.name === "shout-failed") {
-      return "shrink";
-    }
-    return state;
-  }
-
-  // 直径が点の大きさ以下になったら星へ進む。設定へは戻さない。
-  if (state === "shrink") {
-    if (event.name === "tick" && event.diameterPx <= EARTH_POINT_PX) {
-      return "stars";
-    }
-    return state;
-  }
-
-  return state;
+  // 有効なイベントであれば次の状態を返し、未知・無効イベントは現状維持とする。
+  return Object.prototype.hasOwnProperty.call(table, event) ? table[event] : state;
 }

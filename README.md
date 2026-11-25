@@ -1,121 +1,128 @@
 # ColorBeaconTimer
 
-残り時間に応じて青く光り、点滅し、赤へ変わる「カラービーコン」ランプを備えた、オリジナルのカウントダウンタイマーです。Chrome 拡張機能（Manifest V3）として開発します。
-
-## 開発状況
-
-**Phase 4 は完了した**（2026-11-13）。Product Owner（マサ）が実装と自動テスト報告を承認した。要求仕様書 `SW105` v1.1、総合テストの計画 `SWP6` v1.0、ソフトウェアアーキテクチャ設計書 `SW205` v1.0 も、同日に承認済みである。次は Phase 5 で、マサが動作を評価する。手動の 16 件は未実施のままである。総合判定は Pass にしていない。
+残り時間に応じて青く光り、赤く線形加速点滅し、終了時に音声とランダムドット飛散で知らせるオリジナルのカウントダウンタイマーです。Google Chrome 拡張機能（Manifest V3）として開発しています。
 
 ## 目的
 
-名古屋大学 enPiT-Pro Emb 科目「[生成AI時代のソフトウェア開発プロセス](https://enpit-emb.nces.i.nagoya-u.ac.jp/enpit-pro-emb/course/2026/D01-2.html)」（講師: 山本雅基）の演習題材です。
+本ソフトウェアは、AIエージェントと協同する **DADAプロセスを用いたプログラム開発例** です（教育用途の公開物ではありません）。本開発では、DADA（Document-and-Agent-Driven Agile）プロセスの次の 2つの特徴を発揮しています。
 
-AIエージェントと [DADAプロセス](https://github.com/yamaPiT/DADAProcess) に沿って開発を進め、やりとりの一部を講義スライドに掲載して、受講者に雰囲気をつかんでもらうことを想定しています。
+1. **開発文書の作成とレビューが行われている**: 要求仕様書（`SW105`）、総合テスト仕様書・報告書（`SWP6`）、アーキテクチャ設計書（`SW205`）を作成し、工程ごとのレビュー記録表（`REV101_Requirements.md`・`REV101_Test.md`・`REV101_Design.md`・`REV101_Code.md`）および機械チェックによる自己校正レビューを通じて品質を検証しています。
+2. **アジャイル的にプログラムの要求改訂を頻繁に行っている**: Phase 5 の評価を起点とした開発 Loop（v1.0 → v2.0 → v2.1 → v2.2 → v3.0 → v3.1 → v3.2 → v4.0 → v4.1 → v4.2 → v4.3 → v4.3.1 → v4.4 → v4.5）を回し、継続的な要求仕様の改訂と実装・検証を進めています。
 
-## 予定している機能
+## 機能概要
 
-詳細は `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v1.1、承認済み）で定義します。概要は次のとおりです。
+ColorBeaconTimer は、専用ウィンドウ（`700×720px`、Windows 11 上の Chrome ポップアップ実表示領域で実ビューポート幅 `640px` 以上）上で動作する日英常時併記（言語切替ボタンなし）のタイマーです。主な流れは次のとおりです。
 
-### オープニング
+- **オープニング（5シーン構成）**: 第1〜第4シーンは `Back` / `NEXT` ボタンで手動遷移し（第2・第3シーンで BGM をオフライン再生・切替）、第5シーンで立体青色ランプを拡大したあとに設定画面へ進みます（クリックでスキップ可能）。
+- **時刻設定とカウントダウン**: ＋ / − ボタン（単押しおよび長押し早送り）で設定時刻を選び、スタートボタン（`スタート / START`）でカウントダウンを開始します。残時間 1分超は青色点灯、1分以下は赤色の加速点滅と消灯時「ピコン」音で知らせます。
+- **終了処理と `EXIT` ボタン**: 残時間 0 でランプ消灯・「ピコン」音・成人男性声「ジュワッチ」音声再生のあと、中央からドットが 360度放射状に飛散する終了演出画面と `EXIT` ボタンを表示します。`EXIT` ボタン押下またはウィンドウ閉鎖で終了します。
 
-起動時に 2〜3 秒の短い映像を再生します。クリックでスキップできます。
-
-- マルセル・デュシャンのレディメイドへのオマージュとして、「アール・マット」とサインしたオリジナルの線画の便器を描きます。
-- そこから、オリジナルの幾何学的な三面の存在が現れ、顔を「人間」「AI」「カラーランプ」の順に切り替えます。
-- 3つ目の顔のランプがふくらみ、タイマー画面へつながります。
-
-### 時間の設定
-
-- 初期値は 3:00 です。
-- 「＋」「−」ボタンで 1 秒ずつ変更します。長押しで早送りします。
-- 設定できる範囲は 10 秒から 5 分までです。
-
-### スタート
-
-スタートボタンのみです。一時停止とリセットはありません。スタートしたら、設定時間まで走り切ります。
-
-ボタンを押すと、「光とともに英雄が地球へ降り立つ」イメージのオリジナル演出のあと、カウントダウンが始まります。
-
-### ランプと音
-
-状態は残り時間だけで決まります。
-
-| 残り時間 | ランプ | 音 |
-| :--- | :--- | :--- |
-| 2:00 より多い | 青で点灯したまま | 無音 |
-| 1:00 より多く、2:00 以下 | 青でゆっくり点滅 | 点滅に合わせたオリジナルの「ピコン」 |
-| 1:00 以下（0 になるまで） | 赤で点滅（間隔がだんだん短くなる） | 点滅に合わせた「ピコン」 |
-| 0 になったとき | — | 人の声のような「ジュワッ！」 |
-
-設定時間が 2 分未満なら最初から青の点滅、1 分未満なら最初から赤で始まります。
+各シーンの表示文言・点滅計算式・許容誤差・音声仕様などの詳細仕様は、[`docs/artifacts/SW105_ソフトウェア要求仕様書.md`](docs/artifacts/SW105_ソフトウェア要求仕様書.md) を参照してください。
 
 ## 著作権・商標についての方針
 
-本ソフトウェアはオリジナル作品であり、いかなる権利者とも関係がありません。権利者の名称、ロゴ、画像、音源、音声は使用しません。
+本ソフトウェアはオリジナル作品であり、いかなる権利者とも関係がありません。権利者の名称、ロゴ、画像、音源、音声は使用しません。専用ウィンドウのすべての表示および拡張機能説明文では、言語切替ボタンを設けず日本語と英語を常時併記します。
 
-- 図はオリジナルで描きます。終了演出の地球の写真だけは、下の「クレジット」に書いた写真を、加工せずに使います。
-- 「ピコン」は Web Audio API で合成した電子音です。
-- 終了時の声は、開発時に1回合成して保存したファイルを再生します。人の声の録音は使いません。
+- オープニング第2シーンの《泉》写真は、1917年 *The Blind Man* No.2 掲載のパブリックドメイン写真（`PD-1923`、1946年撮影者没により日米ともに著作権消滅）を使用しています。
+- オープニング第2シーンの BGM『ジムノペディ第1番』は、作曲者エリック・サティ（1888年発表・1925年没）により戦時加算を含めても日米ともに楽曲著作権が消滅しており、Wikimedia Commons のパブリックドメイン録音（Robin Alciatore 演奏 / Musopen 提供）をパッケージに同梱してオフライン再生します。
+- オープニング第3シーンの白黒幾何学模様・三面シルエット風イラスト（`three-face-dadaism.svg`）、立体青色ランプ（`blue-lamp.svg`）、拡張機能アイコン（`extension/icons/*`）は開発チームによるオリジナル SVG / 画像です。
+- オープニング第3シーンの BGM オリジナル・宇宙冒険SF映画風シンセサイザー楽曲（`space-adventure-synth.wav`）は、既存の宇宙冒険SF映画・特撮番組・電子音楽作品のテーマ曲や劇伴における主旋律・編曲は一切複製・引用・模倣しない 100% オリジナル楽曲（1970〜80年代レトロフューチャー寄りのシンセウェーブ／電子音楽）です。推進力のあるシンセサイザー・アルペジオベース、印象的なアナログ風シンセリード、浮遊感と広がりのあるアナログ風シンセパッド／コード、および循環畳み込みによるステレオ空間残響（ディレイ／リバーブ）の 4要素を Python 標準ライブラリの非人声シンセサイザー合成（44.1kHz［44100Hz］・16bit・ステレオ 2チャンネル非圧縮 PCM WAV）で生成し、再生時に `GainNode` ゲイン `0.18` を適用して第2シーン『ジムノペディ第1番』と同等水準の音量（実効音量差 ±3.0 dB 以内、実測 -0.00 dB）でオフラインかつシームレスループ再生します（人の声の録音や第三者による無断録音は使用しません）。
+- 「ピコン」は Web Audio API で合成したオリジナル電子音（880Hz 正弦波）です。
+- 終了時の「ジュワッチ」音声は、単一の元気な成人男性話者（`VOICEVOX:玄野武宏`、スタイル `ノーマル`［`speaker=11`］）による一括音声合成取得と Python 標準ライブラリのみでの無音境界調整（WSOLA 時間長整合含む）・穏やかなダイナミック整音・線形ピーク正規化で 1回生成して保存したファイル（`extension/assets/audio/juwacchi.wav`、24000Hz・16bit・モノラル PCM WAV、総長 1.000秒）をオフライン再生します（女性話者ピッチ下げ変換・別音源合成結合［継ぎ接ぎ］・人の声の録音・公式音声・実行時再合成・外部通信は使用せず、再配布許諾規約に基づきクレジット表記を保持しています）。
 
 ## クレジット
 
-終了演出の地球の写真は、NASA Johnson Space Center の Earth from Space が配布する AS17-148-22727 です。
-取得元は https://eol.jsc.nasa.gov/DatabaseImages/ISD/highres/AS17/AS17-148-22727.JPG です。
-一覧 https://eol.jsc.nasa.gov/collections/earthfromspace/images.pl?photo=AS17-148-22727 では、このファイルは幅 4400、高さ 4600、切り抜き無し、注釈無し、2,172,359 バイトです。
-同梱ファイルのバイト数は 2,172,359 です。寸法は 4400×4600 です。SHA-256 は 94d529d4338a5e9a227a5f4cacf332e89c180c5414d185ee7eb0c48a61a5a7e5 です。
-取得したバイト列を、色の調整も切り抜きも再保存もせずに置いています。ファイル内に Adobe Photoshop の記録はありません。
-この写真は、アメリカ合衆国の著作権法では著作権の対象にならない NASA の画像であり、パブリックドメイン（public domain）です。
+- **表示・ウィンドウ・終了ボタン仕様（日英常時併記・実ビューポート幅 640px 以上・`EXIT` ボタン）**:
+  - 言語切替ボタンなし、専用ウィンドウ `700×720px`（Windows 11 上の Chrome ポップアップ実表示領域で実ビューポート幅 `640px` 以上を確保し、見切れ・スクロールなし）・全画面・`extension/manifest.json`・`extension/store-listing.txt` で日本語と英語を常時併記
+  - 終了演出画面（ドット飛散状態）に `EXIT` ボタン（ラベル「`EXIT`」）を表示し、押下により専用ウィンドウを閉じてプログラムを終了
+- **オープニング第2シーン《泉》写真**（`extension/assets/images/fountain-stieglitz.jpg`）:
+  - Wikimedia Commons: `File:Marcel_Duchamp,_1917,_Fountain,_photograph_by_Alfred_Stieglitz.jpg`（アルフレッド・スティーグリッツ撮影、1917年 *The Blind Man* No.2 掲載）
+  - 取得元: `https://commons.wikimedia.org/wiki/File:Marcel_Duchamp,_1917,_Fountain,_photograph_by_Alfred_Stieglitz.jpg`（画像ファイル: `https://upload.wikimedia.org/wikipedia/commons/d/dd/Marcel_Duchamp%2C_1917%2C_Fountain%2C_photograph_by_Alfred_Stieglitz.jpg`）
+  - ライセンス・著作権消滅根拠: `PD-1923` パブリックドメイン。1917年米国公表かつ撮影者 Alfred Stieglitz が 1946年没のため、日米ともに写真著作権は消滅しています。
+  - 同梱ファイル情報: サイズ `2,293,812` バイト、寸法 `1416×1849`、SHA-256 `9359e96a3cbe5b1a9de199a4ebf60d3dc6ae632dbcf57f7e70f88ff36b188604`
+- **オープニング第2シーン BGM『ジムノペディ第1番』**（`extension/assets/audio/gymnopedie1.ogg`）:
+  - 作曲者: エリック・サティ（Erik Satie、1888年発表、1925年作曲者没）
+  - 演奏者: Robin Alciatore（Musopen 提供）
+  - 取得元 URL: `https://commons.wikimedia.org/wiki/File:Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg`（音声ファイル: `https://upload.wikimedia.org/wikipedia/commons/9/90/Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg`）
+  - ライセンス・著作権消滅根拠: Public Domain（録音公開ライセンス: Public Domain / 楽曲: 1888年発表かつ 1925年作曲者没により、戦時加算を含めても日本および米国の双方で著作権消滅済み）
+  - 同梱ファイル情報: `extension/assets/audio/gymnopedie1.ogg`、サイズ `3,696,351` バイト、SHA-256 `419e37656856224227086df32d6d481a00a738961e08fca9f6147e472beea53e`
+- **オープニング第3シーンイラスト**（`extension/assets/images/three-face-dadaism.svg`）:
+  - 開発チーム自作の白黒幾何学模様・三面シルエット風オリジナル SVG イラスト（MIT License）
+- **オープニング第3シーン BGM オリジナル・宇宙冒険SF映画風シンセサイザー楽曲**（`extension/assets/audio/space-adventure-synth.wav`）:
+  - 制作方針・構成要素: 開発チーム自作の 100% オリジナル楽曲（1970〜80年代レトロフューチャー寄りのシンセウェーブ／電子音楽。既存の宇宙冒険SF映画・特撮番組・電子音楽作品のテーマ曲や劇伴における主旋律・編曲は一切複製・引用・模倣しない。人の声の録音や第三者による無断録音ではない）。推進力のあるシンセサイザー・アルペジオベース、印象的なアナログ風シンセリード、浮遊感と広がりのあるアナログ風シンセパッド／コード、および循環畳み込みによるステレオ空間残響（ディレイ／リバーブ）の 4要素で構成
+  - 音質仕様・音量調整: Python 標準ライブラリによる非人声シンセサイザー合成 PCM WAV（44.1kHz［44100Hz］・16bit・ステレオ 2チャンネル、長さ 16.000秒［120 BPM・4/4拍子・8小節］、最大正規化振幅 0.8500［0.30 以上 0.95 以下・非クリッピング］、全区間 RMS 0.1969 / `-14.12 dBFS`、ループ境界無音ギャップ 0.0000秒［0.05秒未満］、接続点正規化振幅差 0.0034［0.05 以下］）。再生時は第2シーン『ジムノペディ第1番』（実測 `-29.01 dBFS`、ゲイン `1.0`）との実効音量差を ±3.0 dB 以内（実測 `-0.00 dB`）の同等水準に保つため `GainNode` ゲイン `0.18`（`-14.89 dB`、実効 `-29.01 dBFS`、音割れなし）を適用（WAV ファイル自体の振幅・SHA-256 は維持）
+  - ライセンス: MIT License
+  - 同梱ファイル情報: `extension/assets/audio/space-adventure-synth.wav`、サイズ `2,822,444` バイト、SHA-256 `5e84a43d7becd93480bddf14919927da88daebadc69222ce6aecbfb644f4b93b`
+- **終了時「ジュワッチ」音声**（`extension/assets/audio/juwacchi.wav`）:
+  - クレジット表記: `VOICEVOX:玄野武宏`（VirVox Project 管理、スタイル `ノーマル`［`speaker=11`］採用／第一候補 `喜び`［`speaker=39`］は有声 F0 が女性声域閾値超過のため代替候補を採用）
+  - 生成方針・出典: VOICEVOX 公開合成 API で単一の元気な成人男性話者（`VOICEVOX:玄野武宏`）に発話文「ジュワッチ！」を一括音声合成取得し、Python 標準ライブラリのみで無音境界調整（WSOLA 時間長整合含む）・穏やかなダイナミック整音・線形ピーク `0.94` 正規化を実施して 1回生成・保存（女性話者ピッチ下げ変換・別音源合成結合［継ぎ接ぎ］・人の声の録音・公式音声・実行時再合成・外部通信は一切不使用。VOICEVOX および VirVox Project 利用規約に基づきクレジット表記により商用・非商用再配布可能。Phase 5 での手元 `.wav` 差し替えにも対応可能）
+  - 音質・定量仕様: 24000Hz・16bit・モノラル非圧縮 PCM WAV、総長 1.000秒（基準 `0.80〜1.20` 秒）、全体ピーク正規化振幅 0.9400（基準 `0.85〜0.99`・非クリッピング）、全区間 RMS 0.1908 / `-14.39 dBFS`（基準 `0.18` 以上 / `-14.9 dBFS` 以上）、全体有声区間 F0 中央値 `131.9 Hz`（基準 `110〜180 Hz`、女性声域 `220 Hz` 以上不使用）、前半 65% 有声区間 F0 中央値 `142.4 Hz`・後半 35% 有声区間 F0 中央値 `109.1 Hz`（各区間基準 `85〜200 Hz`、声質断絶なし）、後半 35% ピーク比 0.6981（基準 `0.25〜0.85`）、後半 `3kHz〜8kHz` 高域帯域 RMS は前半全帯域 RMS 以下（`0.0412 <= 0.2281`、実測比 `0.1807`）
+  - 同梱ファイル情報: `extension/assets/audio/juwacchi.wav`、サイズ `48,044` バイト、SHA-256 `2cc9fa63a0ab77ea1d926cb00f1204ed3c8b271bafc52acf9e0c513cce1d2d43`
 
-VOICEVOX:四国めたん
+## インストールとテスト方法
 
-## 開発プロセス
+### Chrome 拡張機能の読み込み
+1. Google Chrome で `chrome://extensions` を開きます。
+2. 右上の「デベロッパーモード」を有効にします。
+3. 「パッケージ化されていない拡張機能を読み込む」から本リポジトリの `extension/` フォルダを指定します。
+4. ツールバーの ColorBeaconTimer アイコンをクリックして専用ウィンドウを起動します。
 
-本リポジトリは [DADAプロセス](https://github.com/yamaPiT/DADAProcess)（Document-and-Agent-Driven Agile）のキットを同梱し、これに沿って開発します。同梱キットは 2026-11-14 のコミット `ac2bf274b3868c498c4ea9f024ef4542b3178a8f` に合わせています。
+### 自動テストの実行
+リポジトリ直下で以下を実行します（要 Node.js / Playwright）。
+```bash
+npm test
+```
+- `npm run test:unit`: 単体テスト（`node --test tests/unit/*.test.js`）
+- `npm run test:system`: Playwright によるシステムテスト（`tests/system/*.spec.js`）
 
-### DADA という名前の由来
+## 開発プロセス（DADAプロセス）
 
-名前には、マルセル・デュシャンのダダイズムと、古典的な特撮番組に登場する「顔が三つある宇宙人」という、二つの由来があります。
+本リポジトリは [DADA（Document-and-Agent-Driven Agile）プロセス](https://github.com/yamaPiT/DADAProcess)（v7.0.0、取り込みコミット `6cc5081a`）を用いたプログラム開発例です。要求定義・総合テスト仕様・設計・実装の全工程で開発文書（`docs/artifacts/`）を唯一の情報源（Single Source of Truth）として維持し、工程ごとのレビュー記録表（`REV101_*`）と機械チェック（`tools/dada_verify.py` / `tools/dada_check.py` / `tools/asdoq_lint.py` / `tools/style_check.py`）による自己校正レビュー、ならびに Phase 5 評価を起点とした開発 Loop による頻繁な要求改訂を実践しています。
 
-### 同梱キットの構成
+### リポジトリ内のプロセス資産構成
 
 | パス | 役割 |
 | :--- | :--- |
-| `AGENTS.md` | Cursor 向けの入口 |
-| `.agents/` | ルールとスキルの正本（文書レビュー用の `asdoq-reviewer` を含む） |
-| `docs/` | ガイドライン、ひな形、工程の状態、成果物 |
-| `tools/` | `dada_check.py`、`asdoq_lint.py` などの点検ツール |
-| `scratch/` | キット保守用（本製品の開発では使いません） |
-
-アプリケーション本体の配置は、承認済みのソフトウェアアーキテクチャ設計書（`SW205` v1.0）が定めています。
+| [`AGENTS.md`](AGENTS.md) / [`.agents/AGENTS.md`](.agents/AGENTS.md) | ワークスペースルール（DADAプロセスの4原則・ID体系・Phase 0判定・自律ゲート基準） |
+| [`.agents/skills/`](.agents/skills/) | 工程別のペルソナスキル（`dada-process`, `requirements-engineer`, `test-engineer`, `architect`, `programmer`, 各種レビュアー, `asdoq-reviewer`, `JP-Humanizer` 等） |
+| [`docs/artifacts/`](docs/artifacts/) | 開発成果物（`SW105` 要求仕様書、`SWP6` 総合テスト仕様書・報告書、`SW205` アーキテクチャ設計書、各種レビュー記録 `REV101_*`、バグ管理表 `BUG101`） |
+| [`docs/process/`](docs/process/) | フェーズ移行サマリー（`last_phase_summary.md`）、実装進捗台帳（`impl_progress.md`）、自律遷移ログ（`autoloop_log.md`） |
+| [`docs/guidelines/`](docs/guidelines/) / [`docs/templates/`](docs/templates/) | ASDoQ文書品質モデル関連基準・執筆ルール・環境/定義指針（`antigravity_adapter.md` / `agent_def_phase_addon.md` 等）・各種ひな形 |
+| [`tools/`](tools/) | 決定論的点検・変換ツール（`dada_verify.py`, `dada_benchmark.py`, `dada_check.py`, `asdoq_lint.py`, `style_check.py`, `office_io.py`, `export_skillset.py` 等） |
+| [`extension/`](extension/) / [`tests/`](tests/) | ColorBeaconTimer Chrome 拡張機能本体および単体・システムテスト |
 
 ### 工程（Phase 0〜5）
-
-1. **Phase 0 ルーティング**: 開発対象、実行モード、規模を判定する。
-2. **Phase 1 要求定義**: ソフトウェア要求仕様書（`SW105`）を作成する。
-3. **Phase 2 総合テスト仕様策定**: 総合テスト仕様書（`SWP6`）の計画を、設計より先に作る。
+1. **Phase 0 ルーティング**: 開発対象・実行モード（承認ゲート型 / 自律型）・変更スケールを判定する。
+2. **Phase 1 要求定義**: ソフトウェア要求仕様書（`SW105`）を作成・改訂する。
+3. **Phase 2 総合テスト仕様策定**: 設計に先立ち、総合テスト仕様書（`SWP6`）の計画を作成する。
 4. **Phase 3 アーキテクチャ設計**: ソフトウェアアーキテクチャ設計書（`SW205`）を作成する。
-5. **Phase 4 実装・総合テスト報告**: 実装とデバッグを行い、総合テスト結果を報告する。
-6. **Phase 5 評価**: 人間が動作を評価し、必要なら要求を見直す。
+5. **Phase 4 実装・デバッグ・総合テスト報告**: ユニット実装・単体テスト・総合テストを実施し、`SWP6` の報告書を締結する。
+6. **Phase 5 人間による評価と要求見直し**: 動作を評価し、必要なら開発Loopとして Phase 1 へ戻る。
 
-### 始め方
+<a id="ライセンス"></a>
+## 📄 ライセンス・著作権表示 (License & Attributions)
 
-このリポジトリを Cursor または Antigravity で開き、次のように指示してください。
+ColorBeaconTimer 本体（DADAプロセスを用いたプログラム開発例）および本リポジトリに同梱している DADAプロセス一式（ワークスペースルール・スキル定義・テンプレート・検証スクリプト）は [MIT License](LICENSE)（`Copyright (c) 2026 YAMAMOTO Masaki (yamaPiT)`）の下で公開されています。商用・非商用を問わず、無償かつ自由に利用・複製・改変・再配布できます。
 
-> DADAプロセスで開発を開始してください。
+### 同梱している第三者著作物・素材および参考文献の著作権表示
 
-## インストール方法（予定）
+本リポジトリが収録または翻案・改変して同梱している第三者著作物および素材については、それぞれの原著作者の著作権表示およびライセンス条項が適用されます。再配布や派生著作物の作成にあたっては、[LICENSE](LICENSE) および以下の表示を保持してください。
 
-1. Chrome で `chrome://extensions` を開く。
-2. デベロッパーモードを有効にする。
-3. 「パッケージ化されていない拡張機能を読み込む」で、拡張機能のフォルダを指定する。
-
-配置フォルダは `extension/` です。自動テストは、リポジトリ直下で `npm test` を実行します。画面の自動テストは Playwright 同梱の Chromium を使います。
-
-## ライセンス
-
-[MIT License](LICENSE) です。Copyright (c) 2026 YAMAMOTO Masaki (yamaPiT)。
-
-同梱の第三者著作物として、次の表示を `LICENSE` に収録しています。再配布時はこれらの表示を保持してください。
-
-- ASDoQ のシステム開発文書品質モデル関連文書（ASDoQドキュメントライセンス）。品質モデル本文、チェックリスト、執筆ルールに加え、`tools/asdoq_dictionary.json` と `.agents/skills/asdoq-reviewer/` を含む
-- 日本語推敲スキル JP-Humanizer（原著作物: yomiyasu、MIT License）。`.agents/skills/JP-Humanizer/` と `tools/style_check.py` を含む
+1. **ColorBeaconTimer 同梱素材および表示仕様**:
+   - 《泉》写真（`extension/assets/images/fountain-stieglitz.jpg`）: Wikimedia Commons `File:Marcel_Duchamp,_1917,_Fountain,_photograph_by_Alfred_Stieglitz.jpg`（アルフレッド・スティーグリッツ撮影、1917年 *The Blind Man* No.2 掲載、`PD-1923` パブリックドメイン、1946年撮影者没により日米ともに写真著作権消滅、1416×1849、2,293,812 バイト、SHA-256 `9359e96a3cbe5b1a9de199a4ebf60d3dc6ae632dbcf57f7e70f88ff36b188604`）。
+   - 第2シーン BGM『ジムノペディ第1番』（`extension/assets/audio/gymnopedie1.ogg`）: 作曲者 エリック・サティ（Erik Satie、1888年発表、1925年作曲者没により戦時加算を含めても日米ともに楽曲著作権消滅済み）、演奏者 Robin Alciatore（Musopen 提供）、取得元 URL `https://commons.wikimedia.org/wiki/File:Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg`、ライセンス Public Domain、サイズ 3,696,351 バイト、SHA-256 `419e37656856224227086df32d6d481a00a738961e08fca9f6147e472beea53e`。
+   - 第3シーン BGM オリジナル・宇宙冒険SF映画風シンセサイザー楽曲（`extension/assets/audio/space-adventure-synth.wav`）: 開発チーム自作の 100% オリジナル楽曲（1970〜80年代レトロフューチャー寄りのシンセウェーブ／電子音楽。既存の宇宙冒険SF映画・特撮番組・電子音楽作品のテーマ曲や劇伴における主旋律・編曲は一切複製・引用・模倣しない。人の声の録音や第三者による無断録音ではない）。推進力のあるシンセサイザー・アルペジオベース、印象的なアナログ風シンセリード、浮遊感と広がりのあるアナログ風シンセパッド／コード、および循環畳み込みによるステレオ空間残響（ディレイ／リバーブ）の 4要素を Python 標準ライブラリの非人声シンセサイザー合成で生成（44.1kHz［44100Hz］・16bit・ステレオ 2チャンネル PCM WAV、長さ 16.000秒［120 BPM・4/4拍子・8小節］、最大正規化振幅 0.8500［0.30〜0.95］、全区間 RMS 0.1969 / `-14.12 dBFS`、ループ境界無音ギャップ 0.0000秒［0.05秒未満］、接続点正規化振幅差 0.0034［0.05 以下］）。再生時は第2シーン『ジムノペディ第1番』（実測 `-29.01 dBFS`、ゲイン `1.0`）との実効音量差を ±3.0 dB 以内（実測 `-0.00 dB`）の同等水準に保つため `GainNode` ゲイン `0.18`（`-14.89 dB`、実効 `-29.01 dBFS`、音割れなし）を適用（WAV ファイル自体の振幅・SHA-256 維持）。MIT License、サイズ 2,822,444 バイト、SHA-256 `5e84a43d7becd93480bddf14919927da88daebadc69222ce6aecbfb644f4b93b`。
+   - 自作 SVG・アイコン（`extension/assets/images/three-face-dadaism.svg`, `extension/assets/images/blue-lamp.svg`, `extension/icons/*`）: 開発チーム自作のオリジナル制作物（MIT License）。
+   - 終了時「ジュワッチ」音声（`extension/assets/audio/juwacchi.wav`）: クレジット表記 `VOICEVOX:玄野武宏`（VirVox Project 管理、スタイル `ノーマル`［`speaker=11`］）。単一の元気な成人男性話者による「ジュワッチ！」一括音声合成取得と Python 標準ライブラリのみでの無音境界調整（WSOLA 時間長整合含む）・穏やかなダイナミック整音・線形ピーク `0.94` 正規化で 1回生成（女性話者ピッチ下げ変換・別音源合成結合［継ぎ接ぎ］・人の声の録音・公式音声・実行時再合成・外部通信は一切不使用。24000Hz・16bit・モノラル非圧縮 PCM WAV、総長 1.000秒［`0.80〜1.20` 秒］、全体ピーク正規化振幅 0.9400［`0.85〜0.99`・非クリッピング］、全区間 RMS 0.1908 / `-14.39 dBFS`［`0.18` 以上 / `-14.9 dBFS` 以上］、全体有声 F0 中央値 `131.9 Hz`［`110〜180 Hz`］、前半 65% 有声 F0 中央値 `142.4 Hz`・後半 35% 有声 F0 中央値 `109.1 Hz`［各 `85〜200 Hz`］、後半 35% ピーク比 0.6981［`0.25〜0.85`］、後半 `3kHz〜8kHz` 帯域 RMS 0.0412［前半全帯域 RMS 0.2281 以下、比 0.1807］、サイズ 48,044 バイト、SHA-256 `2cc9fa63a0ab77ea1d926cb00f1204ed3c8b271bafc52acf9e0c513cce1d2d43`、VOICEVOX・VirVox Project 利用規約準拠、Phase 5 差し替え対応可）。
+   - 日英常時併記・実ビューポート幅 640px 以上・`EXIT` ボタン仕様: 言語切替ボタンなし、専用ウィンドウ `700×720px`（Windows 11 Chrome ポップアップ実表示領域で実ビューポート幅 `640px` 以上を確保し、全画面・`extension/manifest.json`・`extension/store-listing.txt` で日本語と英語を常時併記）、終了演出画面に `EXIT` ボタン（押下で専用ウィンドウ閉鎖・プログラム終了）を表示。
+2. **ASDoQ システム開発文書品質モデル関連文書および派生定義（ASDoQドキュメントライセンス ADL 1.1）**:
+   - `docs/guidelines/asdoq_model_markdown.md`、`asdoq_checklist.md`、`asdoq_writing_rules.md`、`tools/asdoq_dictionary.json`、および `.agents/skills/asdoq-reviewer/` は、システム開発文書品質研究会（ASDoQ）の『システム開発文書品質モデル Ver. 2.0a』（© システム開発文書品質研究会）を基に、DADAProcess プロジェクトが一部改訂・翻案した派生著作物です（[ADL 1.1](https://asdoq.jp/licence/ADL-1.1.pdf) / [研究会規則](https://asdoq.jp/rule.html)）。
+3. **日本語推敲スキル `JP-Humanizer`（原著作物『yomiyasu』・MIT License）**:
+   - `.agents/skills/JP-Humanizer/` および `tools/style_check.py` は、大賀愛一郎氏（`nanaism` / ALGO ARTIS Inc.）の [『yomiyasu』](https://github.com/nanaism/yomiyasu)（MIT License、`Copyright (c) 2026 Aiichiro Oga (nanaism)`、[解説記事](https://zenn.dev/algoartis/articles/0b1c731881b25c)）を参考に、ASDoQ基準と決定論的検証を追加して再構築した派生スキルです（ライセンス全文は [`.agents/skills/JP-Humanizer/LICENSE.md`](.agents/skills/JP-Humanizer/LICENSE.md)）。
+4. **参考文献**:
+   - 逆瀬川 (`@gyakuse`) [『生成AI以前と以後でエンジニアの文章はどう変わったのか: Qiitaの7万記事を数えてみた話』](https://nyosegawa.com/posts/qiita-writing-before-after-ai/)
+   - 情報処理推進機構（IPA）[『ESPR Ver.2.0：【改訂版】 組込みソフトウェア向け開発プロセスガイド』](https://www.ipa.go.jp/archive/publish/secbooks20071119.html)
+   - Anthropic [『Building Effective Agents』](https://www.anthropic.com/research/building-effective-agents)
+   - IEEE Std 29148-2018（`docs/templates/IEEE29148_2018_SRS.md` は独自記述の日本語ひな形であり規格本文の転載ではありません）
+5. **外部オプションパッケージおよび外部API（同梱なし）**:
+   - `tools/*.py` は Python 標準ライブラリのみで基本動作し、任意導入の外部パッケージ（`janome` 等）や Node/Playwright 依存パッケージ、任意設定の外部サービス（Google Gemini Decisions API、`context7` MCP 等）には各提供元のライセンスおよび利用規約が適用されます。

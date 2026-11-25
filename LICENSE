@@ -83,3 +83,35 @@ DADAプロセス（DADAProcess）全体（ワークスペースルール・ス�
 - 本リポジトリのPythonスクリプト（`tools/*.py`）はPython標準ライブラリのみで基本動作し、サードパーティ製ライブラリのソースコードやバイナリは本リポジトリに同梱していません。
 - 利用者が任意で `pip install` して使用する外部パッケージ（`janome`, `python-docx`, `openpyxl`, `python-pptx`, `pypdf`, `pdfplumber`, `reportlab`, `pillow`, `lxml` 等）については、導入時に各パッケージ固有のオープンソースライセンス（Apache-2.0, MIT, BSD, LGPL 等）が適用されます。
 - 利用者が任意でAPIキーを設定して利用する外部サービス（Google Gemini Decisions API `gemini-decision-1`、Upstash `context7` MCP 等）については、各サービス提供者の利用規約および料金体系が適用されます。
+
+------------------------------------------------------------------------------
+5. ColorBeaconTimer 本体の同梱素材について
+------------------------------------------------------------------------------
+- 《泉》写真 (`extension/assets/images/fountain-stieglitz.jpg`):
+  Wikimedia Commons `File:Marcel_Duchamp,_1917,_Fountain,_photograph_by_Alfred_Stieglitz.jpg`
+  (https://commons.wikimedia.org/wiki/File:Marcel_Duchamp,_1917,_Fountain,_photograph_by_Alfred_Stieglitz.jpg)
+  1917年 *The Blind Man* No.2 掲載（PD-1923 パブリックドメイン）。1946年撮影者没により、日本および米国のいずれにおいても写真著作権は消滅しています。
+  同梱ファイル: 1416×1849、2,293,812 バイト、SHA-256 `9359e96a3cbe5b1a9de199a4ebf60d3dc6ae632dbcf57f7e70f88ff36b188604`
+- 第2シーン BGM『ジムノペディ第1番』 (`extension/assets/audio/gymnopedie1.ogg`):
+  作曲者: エリック・サティ（Erik Satie、1888年発表、1925年作曲者没により戦時加算を含めても日本および米国の双方で楽曲著作権は消滅済み）
+  演奏者: Robin Alciatore（Musopen 提供）
+  取得元 URL: https://commons.wikimedia.org/wiki/File:Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg
+  （音声ファイル URL: https://upload.wikimedia.org/wikipedia/commons/9/90/Erik_Satie_-_gymnopedies_-_la_1_ere._lent_et_douloureux.ogg）
+  ライセンス: Public Domain
+  同梱ファイル: `extension/assets/audio/gymnopedie1.ogg`、3,696,351 バイト、SHA-256 `419e37656856224227086df32d6d481a00a738961e08fca9f6147e472beea53e`
+- 第3シーン BGM オリジナル・宇宙冒険SF映画風シンセサイザー楽曲 (`extension/assets/audio/space-adventure-synth.wav`):
+  ColorBeaconTimer 開発チームによる 100% オリジナル楽曲（1970〜80年代レトロフューチャー寄りのシンセウェーブ／電子音楽。既存の宇宙冒険SF映画・特撮番組・電子音楽作品のテーマ曲や劇伴における主旋律・編曲は一切複製・引用・模倣していません。人の声の録音や第三者による無断録音ではありません）。
+  制作方法・構成要素: 開発時に Python 標準ライブラリによる非人声シンセサイザー合成（4要素：推進力のあるシンセサイザー・アルペジオベース、印象的なアナログ風シンセリード、浮遊感と広がりのあるアナログ風シンセパッド／コード、循環畳み込みによるステレオ空間残響［ディレイ／リバーブ］）で生成。
+  音質仕様: 44.1kHz（44100Hz）・16bit・ステレオ（2チャンネル）非圧縮 PCM WAV、長さ 16.000秒（120 BPM・4/4拍子・8小節）、最大正規化振幅 0.8500（0.30 以上 0.95 以下・非クリッピング）、全区間 RMS 0.1969 / -14.12 dBFS、ループ境界無音ギャップ 0.0000秒（0.05秒未満）、接続点正規化振幅差 0.0034（0.05 以下）。
+  再生音量調整: 第2シーン『ジムノペディ第1番』（実測 -29.01 dBFS、ゲイン 1.0）との実効音量差を ±3.0 dB 以内（実測 -0.00 dB）の同等水準に保つため、再生時に GainNode ゲイン 0.18（-14.89 dB、実効 -29.01 dBFS、音割れなし）を適用します（WAV ファイル自体の振幅・SHA-256 は維持）。
+  ライセンス: MIT License
+  同梱ファイル: `extension/assets/audio/space-adventure-synth.wav`、2,822,444 バイト、SHA-256 `5e84a43d7becd93480bddf14919927da88daebadc69222ce6aecbfb644f4b93b`
+- 終了時音声 (`extension/assets/audio/juwacchi.wav`):
+  音声合成ソフト VOICEVOX（単一の元気な成人男性話者: 玄野武宏、VirVox Project 管理、代替候補スタイル: ノーマル［speaker=11］）による「ジュワッチ！」一括音声合成取得をベースに、Python 標準ライブラリのみで無音境界調整（WSOLA 時間長整合含む）・穏やかなダイナミック整音・全体ピーク 0.94 正規化を適用して 1回生成・保存した音声ファイルです（女性話者ピッチ下げ変換・別音源合成結合［継ぎ接ぎ］・人の声の録音・公式音声・実行時再合成・外部通信は一切使用していません。VOICEVOX および VirVox Project 利用規約に基づき、エンジン本体やキャラクタ絵を同梱せず生成音声のみにクレジット表記を記載することで商用・非商用再配布が許諾されており、Phase 5 での手元 `.wav` 差し替えにも対応します）。
+  音質・定量仕様: 24000Hz・16bit・モノラル非圧縮 PCM WAV、長さ 1.000秒（基準 0.80〜1.20秒）、全体ピーク正規化振幅 0.9400（基準 0.85〜0.99・非クリッピング）、全区間 RMS 0.1908 / -14.39 dBFS（基準 0.18 以上 / -14.9 dBFS 以上）、全体有声区間 F0 中央値 131.9 Hz（基準 110〜180 Hz、女性声域 220 Hz 以上不使用）、前半 65% 有声区間 F0 中央値 142.4 Hz・後半 35% 有声区間 F0 中央値 109.1 Hz（各区間基準 85〜200 Hz、声質断絶なし）、後半 35% ピーク比 0.6981（基準 0.25〜0.85）、後半 3kHz〜8kHz 高域帯域 RMS は前半全帯域 RMS 以下（0.0412 <= 0.2281、実測比 0.1807）。
+  クレジット表記: VOICEVOX:玄野武宏
+  同梱ファイル: `extension/assets/audio/juwacchi.wav`、48,044 バイト、SHA-256 `2cc9fa63a0ab77ea1d926cb00f1204ed3c8b271bafc52acf9e0c513cce1d2d43`
+- その他の拡張機能内画像・アイコン (`extension/icons/*`, `extension/assets/images/three-face-dadaism.svg`, `extension/assets/images/blue-lamp.svg`):
+  ColorBeaconTimer 開発チームによるオリジナル制作物であり、上記の MIT License の下で提供されます。
+- 表示・ウィンドウ・終了ボタン仕様（日英常時併記・実ビューポート幅 640px 以上・EXITボタン・DADAプロセスを用いたプログラム開発例）:
+  ColorBeaconTimer は DADAプロセスを用いたプログラム開発例（非教育用途）です。言語切替ボタンなし、専用ウィンドウ `700×720px`（Windows 11 上の Chrome ポップアップ実表示領域で実ビューポート幅 640px 以上を確保し、全画面非重複・見切れゼロ・スクロールバーなし）および `extension/manifest.json`・`extension/store-listing.txt` で日本語と英語を常時併記し、終了演出画面（ドット飛散状態）に `EXIT` ボタン（ラベル「EXIT」、押下により専用ウィンドウ閉鎖・プログラム終了）を表示します。

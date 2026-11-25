@@ -1,340 +1,435 @@
 /**
  * ファイル名： renderer.js
- * バージョン番号： 1.0.0
- * 作成日： 2026-11-13
+ * バージョン番号： 4.5.0
+ * 作成日： 2026-11-25
  * プログラマ名： Phase 4 生成担当
- * ファイルの概要： ViewModel を専用ウィンドウの DOM、Canvas、img へ描く。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001, REQ-003, REQ-004, REQ-006, REQ-007
+ * ファイルの概要： ViewModel に基づき専用ウィンドウの DOM（日英常時併記・EXITボタン）、Canvas、BGM観測属性を含む観測属性を描画する。
+ * 対応機能ID（トレーサビリティ）： UNIT-010, REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007
  */
 
-const KNOWN_STATES = new Set([
+/** 許可された画面状態の一覧 */
+const VALID_STATES = new Set([
   "opening",
   "setting",
-  "sortie",
   "countdown",
-  "shout",
-  "shrink",
-  "stars",
+  "endingAudio",
+  "endingDots",
 ]);
 
-const COLOR = {
-  blue: "#1a5cff",
-  red: "#ff2a2a",
+/** オープニング各シーンのタイトル・日英併記本文・画像設定（SW105 REQ-001 v4.5 準拠） */
+const OPENING_SCENES = {
+  scene1: {
+    title: "",
+    text: [
+      "このソフトウェアは、 DADA（Document-and-Agent-Driven Agile）プロセスで開発しました。",
+      "",
+      "This software was developed using the DADA (Document-and-Agent-Driven Agile) process.",
+    ].join("\n"),
+    textClass: "opening-text-center",
+    imageSrc: "",
+    imageAlt: "",
+  },
+  scene2: {
+    title: "連想ゲーム1 / Association Game 1",
+    text: [
+      "・ダダと言えば、前衛的な芸術運動のダダイズム",
+      '・中心人物の一人であるマルセル・デュシャンの代表作は、写真の大量生産の小便器を倒して "R.Mutt"と署名した「泉」。',
+      "・流れる曲はダダにも関わったサティの名曲「ジムノペディ第1番」",
+      "",
+      '• Speaking of "Dada," it brings to mind Dadaism, the avant-garde art movement.',
+      '• One of its key figures, Marcel Duchamp, created his iconic work "Fountain" (pictured) by turning a mass-produced urinal on its side and signing it "R.Mutt".',
+      '• The music playing is "Gymnopédie No. 1," a masterpiece by Erik Satie, who was also associated with Dada.',
+    ].join("\n"),
+    textClass: "opening-text-list",
+    imageSrc: "assets/images/fountain-stieglitz.jpg",
+    imageAlt: "マルセル・デュシャン《泉》（アルフレッド・スティーグリッツ撮影） / Marcel Duchamp, Fountain (photographed by Alfred Stieglitz)",
+  },
+  scene3: {
+    title: "連想ゲーム2 / Association Game 2",
+    text: [
+      "・ダダと言えば、ダダイズムの影響を受けて命名された宇宙怪獣（1967年1月22日放送のTV番組）",
+      "・お約束通りにヒーローに倒されたが根強い人気があり、スイス大使館で2016年に開催されたダダイズム100周年パーティーに招待された。",
+      "・流れる曲は1970〜80年代レトロフューチャー風の宇宙冒険シンセサイザー音楽",
+      "",
+      '• Speaking of "Dada," it also brings to mind the space monster named under the influence of Dadaism (a TV show broadcast on January 22, 1967).',
+      "• Although defeated by the hero as expected, it remained deeply popular and was invited to the Dadaism 100th Anniversary Party held at the Swiss Embassy in 2016.",
+      "• The music playing is 1970s–80s retro-futuristic space-adventure synthesizer music.",
+    ].join("\n"),
+    textClass: "opening-text-list",
+    imageSrc: "assets/images/three-face-dadaism.svg",
+    imageAlt: "オリジナルの白黒幾何学模様による三面シルエット風イラスト / Original black-and-white geometric three-face silhouette illustration",
+  },
+  scene4: {
+    title: "連想ゲーム3 / Association Game 3",
+    text: [
+      "・ダダを倒したのは、胸にランプが光る、あのヒーロー。",
+      "・そして、続くカラービームタイマーのプログラムは、DADA（Document-and-Agent-Driven Agile）プロセスで開発された",
+      "",
+      "• The one who defeated Dada was that hero with a glowing lamp on his chest.",
+      "• And the ColorBeaconTimer program that follows was developed using the DADA (Document-and-Agent-Driven Agile) process.",
+    ].join("\n"),
+    textClass: "opening-text-list",
+    imageSrc: "",
+    imageAlt: "",
+  },
 };
 
 /**
  * 関数名： render
- * 戻り値： 未知の状態名のときは UnknownState。描けたときは undefined。
- * 引数： viewModel は1フレームの値。dom は文書。
- * 関数の概要： 文字は DOM に、演出は Canvas に、地球は img に置く。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001, REQ-003, REQ-004, REQ-006, REQ-007
+ * 戻り値： 'ok' | 'UnknownState'。
+ * 引数： viewModel は 1 フレーム分の描画モデル、dom は操作対象の DOM 要素群。
+ * 関数の概要： 状態に応じてオープニング5シーン（タイトル・本文・画像・手動前後ボタン・第5シーン拡大）、タイマーUI、終了ドットCanvas、および観測属性を描画する。
+ * 対応機能ID（トレーサビリティ）： UNIT-010, REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007
  */
 export function render(viewModel, dom) {
-  if (!viewModel || !KNOWN_STATES.has(viewModel.state)) {
-    return "UnknownState";
-  }
-  const root = dom.querySelector("#app");
-  if (!root) {
+  if (!viewModel || !VALID_STATES.has(viewModel.state)) {
     return "UnknownState";
   }
 
-  // 観測属性は利用者向けの文言ではない。自動テストが毎フレーム読む。
-  writeObservation(root, viewModel);
+  const {
+    app,
+    openingStage,
+    openingTitle,
+    openingImage,
+    openingLamp,
+    openingText,
+    openingNav,
+    btnOpeningBack,
+    btnOpeningNext,
+    timerUi,
+    beacon,
+    timeEl,
+    controls,
+    btnMinus,
+    btnStart,
+    btnPlus,
+    dotsCanvas,
+    btnExit,
+  } = dom;
 
-  const signature = dom.querySelector("#signature");
-  const time = dom.querySelector("#time");
-  const controls = dom.querySelector("#controls");
-  const beacon = dom.querySelector("#beacon");
-  const earth = dom.querySelector("#earth");
-  const canvas = dom.querySelector("#stage");
+  const isOpening = viewModel.state === "opening";
+  const isEndingDots = viewModel.state === "endingDots";
+  const isTimerUi = !isOpening && !isEndingDots;
+  const backVisible = isOpening && Boolean(viewModel.openingBackVisible);
+  const nextVisible = isOpening && Boolean(viewModel.openingNextVisible);
+  const exitVisible = isEndingDots && Boolean(viewModel.exitVisible);
 
-  // 便器の線画のあいだだけ、署名を出す。年は出さない。
-  const showSign = viewModel.openingStep === "toilet" || viewModel.openingStep === "shake";
-  signature.textContent = showSign ? "アール・マット" : "";
-  signature.hidden = !showSign;
+  // 観測属性を #app の dataset へ反映する。
+  app.dataset.state = viewModel.state;
+  app.dataset.openingStep = isOpening ? (viewModel.openingStep || "") : "";
+  app.dataset.openingScene = isOpening ? String(Number(viewModel.openingSceneIndex) || 0) : "0";
+  app.dataset.openingImage = isOpening ? (viewModel.openingImageKind || "none") : "none";
+  app.dataset.openingScale = String(viewModel.openingScale);
+  app.dataset.openingBackVisible = backVisible ? "true" : "false";
+  app.dataset.openingNextVisible = nextVisible ? "true" : "false";
+  app.dataset.openingBgm = viewModel.openingBgmTrack || "none";
+  app.dataset.openingBgmUrl = viewModel.openingBgmUrl || "";
+  app.dataset.openingBgmLog = JSON.stringify(viewModel.openingBgmLog || []);
+  app.dataset.settingMs = String(Math.round(viewModel.settingMs));
+  app.dataset.remainingMs = String(Math.round(viewModel.remainingMs));
+  app.dataset.displayTime = viewModel.displayTime;
+  app.dataset.beaconColor = viewModel.beaconColor;
+  app.dataset.beaconLit = viewModel.beaconLit ? "true" : "false";
+  app.dataset.juwacchiUrl = viewModel.juwacchiUrl || "";
+  app.dataset.blinkLog = JSON.stringify(viewModel.blinkLog || []);
+  app.dataset.marks = JSON.stringify(viewModel.marks || {});
+  app.dataset.dotsActive = isEndingDots ? "true" : "false";
+  app.dataset.exitVisible = exitVisible ? "true" : "false";
 
-  time.textContent = viewModel.timeVisible ? viewModel.displayTime : "";
-  time.hidden = !viewModel.timeVisible;
-
-  controls.hidden = !viewModel.buttonsVisible;
-
-  paintBeacon(beacon, viewModel);
-  paintEarth(earth, root, viewModel);
-  paintStage(canvas, viewModel);
-  return undefined;
-}
-
-/**
- * 関数名： writeObservation
- * 戻り値： なし。
- * 引数： root は #app。viewModel は1フレームの値。
- * 関数の概要： ルート要素の data 属性へ、状態、残時間、点滅記録、印を書く。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-004, REQ-007
- */
-function writeObservation(root, viewModel) {
-  root.dataset.state = viewModel.state;
-  root.dataset.remainingMs = String(Math.round(viewModel.remainingMs));
-  root.dataset.settingMs = String(Math.round(viewModel.settingMs));
-  root.dataset.displayTime = viewModel.displayTime;
-  root.dataset.timeVisible = viewModel.timeVisible ? "true" : "false";
-  root.dataset.beaconColor = viewModel.beaconColor;
-  root.dataset.beaconOpacity = String(viewModel.beaconOpacity);
-  root.dataset.shoutUrl = viewModel.shoutUrl || "";
-  root.dataset.blinkLog = JSON.stringify(viewModel.blinkLog || []);
-  root.dataset.marks = JSON.stringify(viewModel.marks || []);
-}
-
-/**
- * 関数名： paintBeacon
- * 戻り値： なし。
- * 引数： beacon は円の要素。viewModel は色と不透明度を持つ。
- * 関数の概要： 青と赤のランプを CSS の色と不透明度で出す。消灯のときは隠す。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-004
- */
-function paintBeacon(beacon, viewModel) {
-  // 消灯の区分だけ要素を外す。青のフェードと赤の後半は、不透明度 0 で残す。
-  beacon.hidden = viewModel.beaconColor === "off";
-  beacon.style.background = COLOR[viewModel.beaconColor] || "transparent";
-  beacon.style.opacity = String(viewModel.beaconOpacity);
-}
-
-/**
- * 関数名： paintEarth
- * 戻り値： なし。
- * 引数： earth は img。root は #app。viewModel は直径を持つ。
- * 関数の概要： 縮小中だけ写真を正方形で出し、表示後の矩形を観測属性へ書く。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-007
- */
-function paintEarth(earth, root, viewModel) {
-  const diameter = viewModel.earthDiameterPx;
-  if (!diameter || diameter <= 0) {
-    earth.hidden = true;
-    earth.style.width = "0px";
-    earth.style.height = "0px";
-    root.dataset.earthDiameterPx = "0";
-    return;
+  // 状態別の表示領域を切り替える。
+  openingStage.hidden = !isOpening;
+  timerUi.hidden = !isTimerUi;
+  dotsCanvas.hidden = !isEndingDots;
+  if (btnExit) {
+    // 終了演出画面（endingDots かつ exitVisible）のみ EXIT ボタンを操作可能に表示する。
+    btnExit.hidden = !exitVisible;
+    btnExit.disabled = !exitVisible;
+    if (exitVisible) {
+      btnExit.textContent = "EXIT";
+    }
   }
-  earth.hidden = false;
-  // ファイルは拡大縮小しない。要素の正方形が、写真を囲む一辺になる。
-  earth.style.width = diameter + "px";
-  earth.style.height = diameter + "px";
-  const rect = earth.getBoundingClientRect();
-  const shown = Math.max(rect.width, rect.height);
-  root.dataset.earthDiameterPx = String(shown);
+
+  if (isOpening) {
+    hideTimerUiChildren({
+      timeEl,
+      controls,
+      btnMinus,
+      btnStart,
+      btnPlus,
+    });
+    renderOpening(viewModel, {
+      openingTitle,
+      openingImage,
+      openingLamp,
+      openingText,
+      openingNav,
+      btnOpeningBack,
+      btnOpeningNext,
+    });
+  } else {
+    hideOpeningChildren({
+      openingTitle,
+      openingImage,
+      openingLamp,
+      openingText,
+      openingNav,
+      btnOpeningBack,
+      btnOpeningNext,
+    });
+    if (isTimerUi) {
+      renderTimerUi(viewModel, {
+        beacon,
+        timeEl,
+        controls,
+        btnMinus,
+        btnStart,
+        btnPlus,
+      });
+    } else {
+      hideTimerUiChildren({
+        timeEl,
+        controls,
+        btnMinus,
+        btnStart,
+        btnPlus,
+      });
+      if (isEndingDots) {
+        renderDotsCanvas(viewModel.dots || [], dotsCanvas);
+      }
+    }
+  }
+
+  return "ok";
 }
 
 /**
- * 関数名： paintStage
+ * 関数名： hideTimerUiChildren
  * 戻り値： なし。
- * 引数： canvas は #stage。viewModel は演出のステップを持つ。
- * 関数の概要： オープニング、出撃演出、星を Canvas 2D に描く。文字は描かない。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001, REQ-003, REQ-007
+ * 引数： els はタイマーUI内部要素群。
+ * 関数の概要： オープニングおよび終了演出（endingDots）への遷移時に時刻表示と設定ボタン群を確実に非表示・無効化する。
+ * 対応機能ID（トレーサビリティ）： UNIT-010, REQ-001, REQ-007
  */
-function paintStage(canvas, viewModel) {
+function hideTimerUiChildren(els) {
+  const { timeEl, controls, btnMinus, btnStart, btnPlus } = els;
+  if (timeEl) {
+    timeEl.hidden = true;
+  }
+  if (controls) {
+    controls.hidden = true;
+  }
+  if (btnMinus) {
+    btnMinus.hidden = true;
+    btnMinus.disabled = true;
+  }
+  if (btnStart) {
+    btnStart.hidden = true;
+    btnStart.disabled = true;
+  }
+  if (btnPlus) {
+    btnPlus.hidden = true;
+    btnPlus.disabled = true;
+  }
+}
+
+/**
+ * 関数名： hideOpeningChildren
+ * 戻り値： なし。
+ * 引数： els はオープニング内部要素群。
+ * 関数の概要： 設定画面や終了演出への遷移時にオープニング要素および前後ボタンを確実に非表示にする。
+ * 対応機能ID（トレーサビリティ）： UNIT-010, REQ-001
+ */
+function hideOpeningChildren(els) {
+  const {
+    openingTitle,
+    openingImage,
+    openingLamp,
+    openingText,
+    openingNav,
+    btnOpeningBack,
+    btnOpeningNext,
+  } = els;
+  if (openingTitle) {
+    openingTitle.hidden = true;
+    openingTitle.textContent = "";
+  }
+  if (openingImage) {
+    openingImage.hidden = true;
+  }
+  if (openingLamp) {
+    openingLamp.hidden = true;
+  }
+  if (openingText) {
+    openingText.hidden = true;
+  }
+  if (openingNav) {
+    openingNav.hidden = true;
+  }
+  if (btnOpeningBack) {
+    btnOpeningBack.hidden = true;
+  }
+  if (btnOpeningNext) {
+    btnOpeningNext.hidden = true;
+  }
+}
+
+/**
+ * 関数名： renderOpening
+ * 戻り値： なし。
+ * 引数： viewModel とオープニング要素群。
+ * 関数の概要： オープニング5シーン（scene1〜scene5）のタイトル・画像・テキスト・Back/NEXTボタン・ランプ拡大率を描画する。
+ * 対応機能ID（トレーサビリティ）： UNIT-010, REQ-001, REQ-006
+ */
+function renderOpening(viewModel, els) {
+  const {
+    openingTitle,
+    openingImage,
+    openingLamp,
+    openingText,
+    openingNav,
+    btnOpeningBack,
+    btnOpeningNext,
+  } = els;
+  const step = viewModel.openingStep;
+  const scale = Math.max(0, Math.min(1, Number(viewModel.openingScale) || 0));
+  const scene = OPENING_SCENES[step];
+  const backVisible = Boolean(viewModel.openingBackVisible);
+  const nextVisible = Boolean(viewModel.openingNextVisible);
+
+  if (scene) {
+    // 第1〜第4シーン: タイトル（第2〜第4シーン）、画像（第2・第3シーンのみ）、本文、Back / NEXT ボタンを表示
+    if (openingTitle) {
+      if (scene.title) {
+        openingTitle.hidden = false;
+        openingTitle.textContent = scene.title;
+      } else {
+        openingTitle.hidden = true;
+        openingTitle.textContent = "";
+      }
+    }
+    if (openingImage) {
+      if (scene.imageSrc) {
+        openingImage.hidden = false;
+        if (typeof openingImage.setAttribute === "function") {
+          if (openingImage.getAttribute("src") !== scene.imageSrc) {
+            openingImage.setAttribute("src", scene.imageSrc);
+          }
+          openingImage.setAttribute("alt", scene.imageAlt);
+        } else {
+          openingImage.src = scene.imageSrc;
+          openingImage.alt = scene.imageAlt;
+        }
+      } else {
+        openingImage.hidden = true;
+      }
+    }
+    if (openingLamp) {
+      openingLamp.hidden = true;
+    }
+    if (openingText) {
+      openingText.hidden = false;
+      openingText.textContent = scene.text;
+      openingText.className = scene.textClass;
+    }
+    if (openingNav) {
+      openingNav.hidden = !(backVisible || nextVisible);
+    }
+    if (btnOpeningBack) {
+      btnOpeningBack.hidden = !backVisible;
+    }
+    if (btnOpeningNext) {
+      btnOpeningNext.hidden = !nextVisible;
+    }
+  } else if (step === "scene5") {
+    // 第5シーン: タイトル・本文・画像・前後ボタンをすべて非表示にし、立体青色ランプを拡大表示
+    if (openingTitle) {
+      openingTitle.hidden = true;
+      openingTitle.textContent = "";
+    }
+    if (openingImage) {
+      openingImage.hidden = true;
+    }
+    if (openingText) {
+      openingText.hidden = true;
+      openingText.textContent = "";
+    }
+    if (openingNav) {
+      openingNav.hidden = true;
+    }
+    if (btnOpeningBack) {
+      btnOpeningBack.hidden = true;
+    }
+    if (btnOpeningNext) {
+      btnOpeningNext.hidden = true;
+    }
+    if (openingLamp) {
+      openingLamp.hidden = false;
+      openingLamp.style.transform = `scale(${scale})`;
+    }
+  } else {
+    hideOpeningChildren({
+      openingTitle,
+      openingImage,
+      openingLamp,
+      openingText,
+      openingNav,
+      btnOpeningBack,
+      btnOpeningNext,
+    });
+  }
+}
+
+/**
+ * 関数名： renderTimerUi
+ * 戻り値： なし。
+ * 引数： viewModel とタイマーUI要素群。
+ * 関数の概要： 設定・カウントダウン・音声再生中のランプ、時刻、ボタンを描画する。
+ * 対応機能ID（トレーサビリティ）： UNIT-010, REQ-002, REQ-003, REQ-004, REQ-005
+ */
+function renderTimerUi(viewModel, els) {
+  const { beacon, timeEl, controls, btnMinus, btnStart, btnPlus } = els;
+
+  // ランプの色と点灯状態クラスを設定する。
+  if (!viewModel.beaconLit || viewModel.beaconColor === "off") {
+    beacon.className = "beacon-unlit";
+  } else if (viewModel.beaconColor === "red") {
+    beacon.className = "beacon-red beacon-lit";
+  } else {
+    beacon.className = "beacon-blue beacon-lit";
+  }
+
+  // 残時間とボタン群の表示・無効状態を更新する。
+  const showButtons = Boolean(viewModel.buttonsVisible);
+  const disableButtons = Boolean(viewModel.buttonsDisabled) || !showButtons;
+  timeEl.hidden = !viewModel.timeVisible;
+  timeEl.textContent = viewModel.displayTime;
+
+  controls.hidden = !showButtons;
+  btnMinus.hidden = !showButtons;
+  btnStart.hidden = !showButtons;
+  btnPlus.hidden = !showButtons;
+  btnMinus.disabled = disableButtons;
+  btnStart.disabled = disableButtons;
+  btnPlus.disabled = disableButtons;
+}
+
+/**
+ * 関数名： renderDotsCanvas
+ * 戻り値： なし。
+ * 引数： dots は描画するドット配列、canvas は #dots-canvas 要素。
+ * 関数の概要： 終了演出のランダム飛散ドット群を 2D Canvas に描画する。
+ * 対応機能ID（トレーサビリティ）： UNIT-010, REQ-007
+ */
+function renderDotsCanvas(dots, canvas) {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     return;
   }
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#05070f";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  if (viewModel.state === "opening") {
-    drawOpening(ctx, viewModel.openingStep, viewModel.openingElapsedMs || 0);
-    return;
-  }
-  if (viewModel.state === "sortie") {
-    drawSortie(ctx, viewModel.sortieStep, viewModel.sortieElapsedMs || 0);
-    return;
-  }
-  if (viewModel.state === "stars") {
-    drawStars(ctx, viewModel.stars || []);
-  }
-}
-
-/**
- * 関数名： drawOpening
- * 戻り値： なし。
- * 引数： ctx は 2D コンテキスト。step は表示ステップ。elapsed はオープニングの経過。
- * 関数の概要： 便器の線画、3回の揺れ、3つの顔、ランプの拡大を描く。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001
- */
-function drawOpening(ctx, step, elapsed) {
-  ctx.save();
-  if (step === "shake") {
-    const local = Math.max(0, elapsed - 700);
-    const angle = Math.sin((local / 400) * Math.PI * 2 * 3) * (8 * Math.PI / 180);
-    ctx.translate(240, 320);
-    ctx.rotate(angle);
-    ctx.translate(-240, -320);
-    drawToilet(ctx);
-  } else if (step === "toilet") {
-    drawToilet(ctx);
-  } else if (step === "face1") {
-    drawFaceLines(ctx);
-  } else if (step === "face2") {
-    drawFaceCircuit(ctx);
-  } else if (step === "face3" || step === "expand") {
-    const scale = step === "expand" ? 1 + ((elapsed - 2300) / 200) * 2 : 1;
-    drawLamp(ctx, scale);
-  }
-  ctx.restore();
-}
-
-/**
- * 関数名： drawToilet
- * 戻り値： なし。
- * 引数： ctx は 2D コンテキスト。
- * 関数の概要： 便器を連想する単純な線を、座標だけで描く。写真は読まない。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001
- */
-function drawToilet(ctx) {
-  ctx.save();
-  ctx.translate(240, 300);
-  ctx.strokeStyle = "#e6edf7";
-  ctx.lineWidth = 6;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.beginPath();
-  ctx.moveTo(-70, -80);
-  ctx.quadraticCurveTo(-96, 30, -46, 96);
-  ctx.lineTo(46, 96);
-  ctx.quadraticCurveTo(96, 30, 70, -80);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.ellipse(0, -80, 72, 24, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(-24, 96);
-  ctx.lineTo(-32, 156);
-  ctx.lineTo(32, 156);
-  ctx.lineTo(24, 96);
-  ctx.stroke();
-  ctx.restore();
-}
-
-/**
- * 関数名： drawFaceLines
- * 戻り値： なし。
- * 引数： ctx は 2D コンテキスト。
- * 関数の概要： 顔1として、単純な線の人の顔を描く。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001
- */
-function drawFaceLines(ctx) {
-  ctx.strokeStyle = "#e6edf7";
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(240, 250, 72, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(214, 234, 6, 0, Math.PI * 2);
-  ctx.arc(266, 234, 6, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(240, 262, 30, 0.25, Math.PI - 0.25);
-  ctx.stroke();
-}
-
-/**
- * 関数名： drawFaceCircuit
- * 戻り値： なし。
- * 引数： ctx は 2D コンテキスト。
- * 関数の概要： 顔2として、点と線の模様を描く。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001
- */
-function drawFaceCircuit(ctx) {
-  const nodes = [
-    [170, 190],
-    [240, 168],
-    [312, 204],
-    [198, 276],
-    [286, 286],
-    [240, 236],
-  ];
-  ctx.strokeStyle = "#9eb6ff";
-  ctx.fillStyle = "#d5e2ff";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(nodes[0][0], nodes[0][1]);
-  for (let index = 1; index < nodes.length; index += 1) {
-    ctx.lineTo(nodes[index][0], nodes[index][1]);
-  }
-  ctx.stroke();
-  for (const node of nodes) {
+  for (const dot of dots) {
     ctx.beginPath();
-    ctx.arc(node[0], node[1], 5, 0, Math.PI * 2);
+    ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+    ctx.fillStyle = dot.color;
     ctx.fill();
-  }
-}
-
-/**
- * 関数名： drawLamp
- * 戻り値： なし。
- * 引数： ctx は 2D コンテキスト。scale は拡大率。
- * 関数の概要： 顔3として、青い丸いランプを描く。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-001
- */
-function drawLamp(ctx, scale) {
-  ctx.save();
-  ctx.translate(240, 250);
-  ctx.scale(scale, scale);
-  ctx.fillStyle = COLOR.blue;
-  ctx.beginPath();
-  ctx.arc(0, 0, 70, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-/**
- * 関数名： drawSortie
- * 戻り値： なし。
- * 引数： ctx は 2D コンテキスト。step は映像ステップ。elapsed は出撃演出の経過。
- * 関数の概要： 中心から広がる光、近づく光点、着地を順に描く。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-003
- */
-function drawSortie(ctx, step, elapsed) {
-  if (step === "spread") {
-    const radius = 20 + (Math.max(0, elapsed) / 700) * 220;
-    const gradient = ctx.createRadialGradient(240, 280, 4, 240, 280, radius);
-    gradient.addColorStop(0, "rgba(255,255,255,0.95)");
-    gradient.addColorStop(1, "rgba(26,92,255,0)");
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(240, 280, radius, 0, Math.PI * 2);
-    ctx.fill();
-    return;
-  }
-  if (step === "approach") {
-    const ratio = Math.min(1, Math.max(0, (elapsed - 700) / 700));
-    const y = 70 + ratio * 210;
-    const radius = 4 + ratio * 34;
-    ctx.fillStyle = "#f4f7ff";
-    ctx.beginPath();
-    ctx.arc(240, y, radius, 0, Math.PI * 2);
-    ctx.fill();
-    return;
-  }
-  ctx.fillStyle = COLOR.blue;
-  ctx.beginPath();
-  ctx.arc(240, 280, 50, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.85)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(240, 280, 74, 0, Math.PI * 2);
-  ctx.stroke();
-}
-
-/**
- * 関数名： drawStars
- * 戻り値： なし。
- * 引数： ctx は 2D コンテキスト。stars は中心からの位置の配列。
- * 関数の概要： 渡された位置に、小さな点を描く。
- * 対応機能ID（トレーサビリティ）： UNIT-011, REQ-007
- */
-function drawStars(ctx, stars) {
-  ctx.fillStyle = "#f7fbff";
-  for (const star of stars) {
-    ctx.fillRect(240 + star.x, 320 + star.y, 2, 2);
   }
 }

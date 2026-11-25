@@ -96,3 +96,737 @@ Product Owner マサは、2026-11-13 にこの推奨（出典記録方式）で�
 再レビュー完了: 指摘 5件（High: 2 / Mid: 3 / Low: 0）。Open は 0 件。新しい指摘は無い。
 機械チェック: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SWP6`
 REVIEW: **APPROVED**（根拠: 未解消の High 0件、機械チェックの終了コード 0）
+
+---
+
+## 今回のレビュー（Phase 2 計画 v2.0、2026-11-16）
+
+- **レビュー日**: 2026-11-16
+- **レビュー担当**: `test-reviewer`（自己校正）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v2.0、第1〜4章）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v2.0）
+- **指摘ID**: `R001`〜`R004`
+
+### 機械チェック結果（ステップ1）
+- `python tools/dada_check.py all --summary`: 終了コード 0（`High 0 / Mid 9 / 要確認 2`）。`REQ↔TC` は `7/7` で漏れなし。`Mid 9` は v1.0 既存の `tests/` との一時的差分によるもので、Phase 4 で `tests/` を更新して解消予定。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6`: `High=0 / Mid=7 / 要確認=8`。`RULE-606`（二重ヲ格）および `RULE-605`（格助詞「の」の3回連続）が検出された。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-LINT: OK | Mid=0 / 要確認=0`。
+
+### 内容・網羅性・品質特性の検証（ステップ2〜3）
+- `REQ-001`〜`REQ-007` の全7件に対し、正常系・異常系・境界値テスト（`TC-001`〜`TC-046`、合計46件）が網羅されている。
+- 第5〜6章は Phase 4 記入用の未実施状態が維持されている。
+- 曖昧要求による Phase 1 への差し戻し事項はない。
+
+### 指摘一覧（v2.0 Phase 2）
+表2：Phase 2（v2.0）レビュー指摘記録
+| 指摘ID | 発生日 | 重要度 | 対象ドキュメント・箇所 | 指摘内容 | 修正提案 | 対応結果・修正内容 | ステータス |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| R001 | 2026-11-16 | Mid | SWP6 / 第1.1節（L11） | `[ASDoQ:規範適合性-文法適合性]` `RULE-606`: 「を充足することを」で格助詞「を」が重複している。❌ Before: `すべての要求（REQ-001 から REQ-007）および検証条件を充足することを確認する` | ✅ After: `すべての要求（REQ-001 から REQ-007）と検証条件の充足を確認する` | 修正案のとおり第1.1節を更新し、再検査で解消を確認した。 | Closed |
+| R002 | 2026-11-16 | Mid | SWP6 / 第4章 TC-002, TC-011, TC-046（L69, L78, L113） | `[ASDoQ:規範適合性-文法適合性]` `RULE-606`: テーブル行内でセル境界を跨いで格助詞「を」が近接し、`asdoq_lint` で二重ヲ格として検出されている。❌ Before: `文字入力を実行する \| 第2.1節の環境で拡張機能を導入済み` / `1回クリックする \| 20秒の完了を待たずに` / `終了演出を再生中 \| 専用ウィンドウを` | ✅ After: `文字入力を行う \| 導入済みの第2.1節環境で` / `1回クリック \| 20秒の完了を待たずに` / `終了演出が再生中 \| 専用ウィンドウを` のように表現を整理する | TC-002, TC-011, TC-046 の文言を修正し、再検査で解消を確認した。 | Closed |
+| R003 | 2026-11-16 | Mid | SWP6 / 第4章 TC-029, TC-036（L96, L103） | `[ASDoQ:規範適合性-文法適合性]` `RULE-606`: 同一節内で格助詞「を」が重複している。❌ Before: `カウントダウンを開始した直後のランプ色と点滅周期を計測する` / `音声ファイルを欠損させたテスト用複製を読み込む` | ✅ After: `カウントダウン開始直後のランプ色と点滅周期を計測する` / `音声ファイルが欠損したテスト用複製を読み込む` | TC-029, TC-036 の文言を修正し、再検査で解消を確認した。 | Closed |
+| R004 | 2026-11-16 | Mid | SWP6 / 第4章 TC-037（L104） | `[ASDoQ:規範適合性-文法適合性]` `RULE-605`: 「リポジトリ内のファイル名のいずれにも禁止名称のヒットが」で格助詞「の」が3回連続している。❌ Before: `リポジトリ内のファイル名のいずれにも禁止名称のヒットが 0件である` | ✅ After: `リポジトリ内ファイル名のいずれにも禁止名称がヒットしない（0件）` | TC-037 の期待される出力を修正し、再検査で解消を確認した。 | Closed |
+
+再レビュー完了（2026-11-16）: 指摘 4件（High: 0 / Mid: 4 / Low: 0）。Open は 0 件。
+機械チェック（再検査）: `asdoq_lint.py --profile swp6` High=0 / Mid=0、`style_check.py lint` Mid=0、`style_check.py verify` High=0、`dada_check.py all --summary` 終了コード 0（High 0）。
+REVIEW: **APPROVED**（根拠: 未解消の High 0件・Mid 0件、全 REQ-001〜REQ-007 網羅、第5〜6章の未実施維持、曖昧要求なし）
+
+
+---
+
+## 今回のレビュー（Phase 4 総合テスト報告書・v2.0 改訂）
+
+- **レビュー日**: 2026-11-16
+- **レビュー担当**: `test-reviewer` ペルソナ（Phase 4 総合テスト報告書レビュー）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（第5〜6章）
+- **入力**: `SW105` v2.0、`SWP6` v2.0、`BUG101_バグ管理表.md`
+- **機械チェック**:
+  - `python tools/dada_check.py report --summary`: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0）
+  - `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=12`
+  - `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-LINT: OK | Mid=0 / 要確認=0`
+- **実施結果の客観性確認**:
+  - 4 章の全 46 件（`TC-001`〜`TC-046`：自動 36 件・手動 10 件）が 5.2 節の表 3 に漏れなく記録され、すべて Pass であり、具体的な実行証跡が記載されている。
+  - `BUG101` に未解決（Open）バグは 0 件（`B001` は解決済）。6.1 節および 6.2 節（総合判定: Pass）と数値が一致している。
+  - 5〜6 章の表タイトル（表 3）が表の上に配置され、本文から表番号で参照されている。
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0）
+- **総合判定**: **APPROVED**
+
+---
+
+## 今回のレビュー（Phase 2 計画 v2.1 改訂、2026-11-16）
+
+- **レビュー日**: 2026-11-16
+- **レビュー担当**: `test-reviewer`（自己校正）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v2.1、第1〜4章。第5〜6章の未実施リセット確認を含む）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v2.1）
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0、Open: 0 件）
+
+### 機械チェック結果（ステップ1）
+- `python tools/dada_check.py all --summary`: 終了コード 0（`DADA-CHECK: 要対応（Mid指摘あり） | High 0 / Mid 3 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし。`Mid 3` は Phase 2 で新規追加した自動テスト `TC-047`〜`TC-049` に対応するテストコードが Phase 4 実施前のため未実装であることに起因し、Phase 4 で実装・解消予定。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=7`。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-LINT: OK | Mid=0 / 要確認=0`。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-VERIFY: OK | High=0 / 要確認=0`。
+
+### 内容・網羅性・品質特性の検証（ステップ2〜3）
+- `REQ-001`〜`REQ-007` の全 7 件に対し、正常系・異常系・境界値テスト（`TC-001`〜`TC-050`、合計 50 件：自動 39 件・手動 11 件）が網羅されている。
+- `SW105` v2.1 の改訂点（区間 1・2 静止画表示中の処理バー 0%→100% 進捗、区間 3 縮小開始時の非表示、同梱手書き風「アール・マット」署名画像の年なし・非重複・非テキスト確認）が `TC-006`〜`TC-008`, `TC-011`, `TC-047`〜`TC-050` に漏れなく反映されている。
+- 第 5〜6 章は Phase 4 記入用の未実施状態へリセットされている。
+- ASDoQ 重点特性（保守性・整合性・理解容易性・可読性）について、`SW105` v2.1 との用語・数値・許容誤差の不一致はなく、合否判定基準が定量的かつ客観的に定義されている。
+
+### 総合判定
+- **総合判定**: **APPROVED**（根拠: 未解消の High 0 件・Mid 0 件、Open 0 件、`dada_check.py all` 終了コード 0、第 5〜6 章の未実施リセット確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## 今回のレビュー（Phase 4 総合テスト報告書・v2.1 改訂）
+
+- **レビュー日**: 2026-11-16
+- **レビュー担当**: `test-reviewer` ペルソナ（Phase 4 総合テスト報告書レビュー）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v2.1、第 5〜6 章）
+- **入力**: `SW105` v2.1、`SWP6` v2.1、`BUG101_バグ管理表.md`
+- **機械チェック**:
+  - `python tools/dada_check.py report --summary`: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0）
+  - `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=1 / 要確認=10`（Mid=1 は既存 1〜4 章内の規範適合性項目であり 5〜6 章の新規欠陥なし）
+  - `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-LINT: OK | Mid=0 / 要確認=0`
+  - `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-VERIFY: OK | High=0 / 要確認=0`
+- **実施結果の客観性確認**:
+  - 第 4 章の全 50 件（`TC-001`〜`TC-050`：自動 39 件・手動 11 件）が 5.2 節の表 3 に漏れなく記録され、すべて Pass であり、具体的な実行証跡（Playwright 計測値、座標計測、目視スクリーンショット、WAV 解析）が記載されている。
+  - `BUG101` に未解決（`Open`）バグは 0 件（`B001` は解決済）。6.1 節および 6.2 節（総合判定: Pass）と数値が一致している。
+  - 5〜6 章の表タイトル（表 3）が表の上に配置され、本文から表番号で参照されている。
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0）
+- **総合判定**: **APPROVED**（根拠: 未解決の High 0 件、`dada_check.py report` 終了コード 0）
+
+---
+
+## 今回のレビュー（Phase 2 計画 v2.2 改訂、2026-11-16）
+
+- **レビュー日**: 2026-11-16
+- **レビュー担当**: `test-reviewer`（自己校正）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v2.2、第1〜4章。第5〜6章の未実施リセット確認を含む）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v2.2）
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0、Open: 0 件）
+
+### 機械チェック結果（ステップ1）
+- `python tools/dada_check.py all --summary`: 終了コード 0（`DADA-CHECK: 要対応（Mid指摘あり） | High 0 / Mid 3 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし。`Mid 3` は Phase 2 で新規追加した自動テスト `TC-051`〜`TC-053` に対応するテストコードが Phase 4 実施前のため未実装であることに起因し、Phase 4 で実装・解消予定。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=7`。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-LINT: OK | Mid=0 / 要確認=0`。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-VERIFY: OK | High=0 / 要確認=0`。
+
+### 内容・網羅性・品質特性の検証（ステップ2〜3）
+- `REQ-001`〜`REQ-007` の全 7 件に対し、正常系・異常系・境界値テスト（`TC-001`〜`TC-053`、合計 53 件：自動 42 件・手動 11 件）が網羅されている。
+- `SW105` v2.2 の改訂点である、(1) 署名画像の「ア゛ール・マッド」変更（`TC-006`, `TC-007`, `TC-049`, `TC-050`, 3.3節）、(2) ＋/−ボタンの 2秒長押しによる 0.2秒間隔 10秒早送りおよび離し時非重複・ポインタボタン外移動停止（`TC-015`, `TC-051`〜`TC-053`）、(3) 「ジュワッチ」音声の 2.0秒（許容誤差 ±0.2秒）発音（`TC-033`）が漏れなく反映されている。
+- 第 5〜6 章は Phase 4 記入用の未実施状態へリセットされている。
+- ASDoQ 重点特性（保守性・整合性・理解容易性・可読性）について、`SW105` v2.2 との用語・数値・許容誤差の不一致はなく、合否判定基準が定量的かつ客観的に定義されている。
+
+### 総合判定
+- **総合判定**: **APPROVED**（根拠: 未解消の High 0 件・Mid 0 件、Open 0 件、`dada_check.py all` 終了コード 0、第 5〜6 章の未実施リセット確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## 今回のレビュー（Phase 4 総合テスト報告書・v2.2 改訂）
+
+- **レビュー日**: 2026-11-16
+- **レビュー担当**: `test-reviewer` ペルソナ（Phase 4 総合テスト報告書レビュー）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v2.2、第 5〜6 章）
+- **入力**: `SW105` v2.2、`SWP6` v2.2、`BUG101_バグ管理表.md`
+- **機械チェック**:
+  - `python tools/dada_check.py report --summary`: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0）
+  - `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=7`
+  - `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-LINT: OK | Mid=0 / 要確認=0`
+  - `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-VERIFY: OK | High=0 / 要確認=0`
+- **実施結果の客観性確認**:
+  - 第 4 章の全 53 件（`TC-001`〜`TC-053`：自動 42 件・手動 11 件）が 5.2 節の表 3 に漏れなく記録され、すべて Pass であり、具体的な実行証跡（Playwright 計測値、座標計測、目視スクリーンショット、WAV 実測）が記載されている。
+  - `BUG101` に未解決（`Open`）バグは 0 件（`B001` は解決済）。6.1 節および 6.2 節（`判定: Pass`）と数値が一致している。
+  - 5〜6 章の表タイトル（表 3）が表の上に配置され、本文から表番号で参照されている。
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0）
+- **総合判定**: **APPROVED**（根拠: 未解決の High 0 件、`dada_check.py report` 終了コード 0）
+
+---
+
+## 今回のレビュー（Phase 2 計画 v3.0 案A 改訂、2026-11-17）
+
+- **レビュー日**: 2026-11-17
+- **レビュー担当**: `test-reviewer`（自己校正）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v3.0、第1〜4章。第5〜6章の未実施リセット確認を含む）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v3.0）
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0、Open: 0 件）
+
+### 機械チェック結果（ステップ1）
+- `python tools/dada_check.py all --summary`: 終了コード 0（`DADA-CHECK: 要対応（Mid指摘あり） | High 0 / Mid 4 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし。`Mid 4` は Phase 2 で新規追加した自動テスト `TC-055`〜`TC-058` に対応するテストコードが Phase 4 実施前のため未実装であることに起因し、Phase 4 で実装・解消予定。`要確認 1` は表中の `（0件）` 表記に対する形式検出で残骸なし。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=6 | DECISION1_MODE=off`。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-LINT: OK | Mid=0 / 要確認=0`。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-VERIFY: OK | High=0 / 要確認=0`。
+
+### 内容・網羅性・品質特性の検証（ステップ2〜3）
+- **テストケースの十分性と客観性**: `REQ-001`〜`REQ-007` の全 7 件に対し、正常系・異常系・境界値テスト（`TC-001`〜`TC-058`、合計 58 件：自動 46 件・手動 12 件）が網羅されている。
+  - `REQ-001`（`TC-001`〜`TC-013`, `TC-047`〜`TC-050`, `TC-054`〜`TC-057`）に、5 シーン構成（3秒 DADA開発説明＋処理バー、5秒 連想ゲーム1＋《泉》写真＋処理バー、5秒 連想ゲーム2＋オリジナル三面シルエット風イラスト＋処理バー、2秒 連想ゲーム3＋処理バー、5秒 立体青色ランプ拡大、合計 20.0秒±0.8秒）、各処理バー 0%〜100% 進捗閾値、第5シーン開始時の第4シーン表示非表示化、クリック時スキップが正確に反映されている。
+  - `REQ-006`（`TC-037`〜`TC-042`, `TC-058`）に、禁止名称リスト 8 文字列の大文字・小文字非区別照合、「〜風」表現非誤検知、第2シーン《泉》写真（`PD-1923`、1946年撮影者没による著作権消滅根拠）と音声合成ツールクレジットの `README.md`・`LICENSE` 両記載確認が反映されている。
+  - 第 5〜6 章は Phase 4 記入用の未実施状態へリセットされている（L141〜158）。
+- **ASDoQ重点特性の根拠確認**:
+  - `[ASDoQ:保守性-持続可能性]`: 表1（L32〜36）の設計依存計測手段が「TBD（Phase 3 の SW205 で確定する）」と解消計画付きで明記され、網羅性確認（L129〜137）で `REQ-ID` ごとの `TC-ID` 追跡が可能。
+  - `[ASDoQ:整合性-無矛盾性]`: `SW105` v3.0 の各シーン秒数・許容誤差・処理バー開始時閾値・合計 20.0秒±0.8秒と `TC-004`, `TC-006`, `TC-008`, `TC-009`, `TC-010`, `TC-047`, `TC-048`, `TC-055`, `TC-056`, `TC-057` の数値が一致し、表タイトルも表1〜表4すべて表の直上に配置されている。
+  - `[ASDoQ:理解容易性-非曖昧性（一意性）]` / `[ASDoQ:可読性-表現適切性]`: 禁止曖昧語・指示語は含まれず、期待される出力がすべて数値・文字列・件数で一意に判定可能であり、`style_check.py lint` Mid=0 で自然な日本語を保っている。
+
+### 総合判定
+- **総合判定**: **APPROVED**（根拠: 未解消の High 0 件・Mid 0 件、Open 0 件、`dada_check.py all` 終了コード 0、第 5〜6 章の未実施リセット確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## 今回のレビュー（Phase 4 総合テスト報告書・v3.0 案A 改訂）
+
+- **レビュー日**: 2026-11-17
+- **レビュー担当**: `test-reviewer` ペルソナ（Phase 4 総合テスト報告書レビュー）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v3.0、第 5〜6 章）
+- **入力**: `SW105` v3.0、`SWP6` v3.0、`BUG101_バグ管理表.md`
+- **機械チェック**:
+  - `python tools/dada_check.py report --summary`: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0）
+  - `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=8 | DECISION1_MODE=off`
+  - `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-LINT: OK | Mid=0 / 要確認=0`
+- **実施結果の客観性確認**:
+  - 第 4 章の全 58 件（`TC-001`〜`TC-058`：自動 46 件・手動 12 件）が 5.2 節の表 3 に漏れなく記録され、すべて `Pass` であり、具体的な実行証跡（Playwright 計測時刻、要素矩形、`AudioContext` 発音記録、スクリーンショット目視確認、SHA-256 照合、単体・文書テスト結果）が記載されている。
+  - `BUG101` に未解決（`Open`）バグは 0 件（`B001` は解決済）。6.1 節および 6.2 節（`判定: Pass`）と数値が一致している。
+  - 5〜6 章の表タイトル（表 3）が表の上に配置され、本文から表番号で参照されている。
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0）
+- **総合判定**: **APPROVED**（根拠: 未解決の High 0 件、`dada_check.py report` 終了コード 0）
+
+---
+
+## 今回のレビュー（Phase 2 計画 v3.1 改訂、2026-11-17）
+
+- **レビュー日**: 2026-11-17
+- **レビュー担当**: `test-reviewer`（自己校正）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v3.1、第1〜4章。第5〜6章の未実施リセット確認を含む）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v3.1）
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0、Open: 0 件）
+
+### 機械チェック結果（ステップ1）
+- `python tools/dada_check.py all --summary`: 終了コード 0（`DADA-CHECK: OK | High 0 / Mid 0 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし。`要確認 1` は表中の `（0件）` 表記に対する形式検出でスケルトン残骸なし。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: 終了コード 0（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=9 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）。`要確認 9` は L104 の鉤括弧列挙に対する `RULE-206`（誤検知）1件および「実行時」「再生時」等の複合名詞末尾「時」に対する `RULE-504` 8件であり、実欠陥なし。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-LINT: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | Mid=0 / 要確認=0`。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-VERIFY: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | High=0 / 要確認=0`。
+
+### 内容・網羅性・品質特性の検証（ステップ2〜3）
+- **テストケースの十分性と客観性**: `REQ-001`〜`REQ-007` の全 7 件に対し、正常系・異常系・境界値テスト（`TC-001`〜`TC-058`、合計 58 件：自動 46 件・手動 12 件）が網羅されている。
+  - `REQ-001`（`TC-006`, `TC-008`, `TC-010`, `TC-011`, `TC-048`, `TC-055`, `TC-056`, `TC-057`）に、`SW105` v3.1 のオープニング時間長改訂（第1シーン 3.0秒±0.2秒、第2シーン 7.0秒±0.2秒、第3シーン 7.0秒±0.2秒、第4シーン 3.0秒±0.2秒、第5シーン 5.0秒±0.2秒、合計 25.0秒±1.0秒、第4シーン処理バー開始後 0.3秒以内 25% 未満、スキップ時 25秒経過前打ち切り）が正確に反映されている。
+  - `REQ-005`（`TC-033`）に、残時間 0 時のジュワッチ音声発音時間 1.0秒（許容誤差 ±0.2秒、0.8秒以上 1.2秒以下）が正確に反映されている。
+  - 第 5〜6 章（L141〜158）は Phase 4 記入用の未実施状態へリセットされており、架空の `Pass` 等は記入されていない。
+- **ASDoQ重点特性の根拠確認**:
+  - `[ASDoQ:保守性-持続可能性]`: 表1（L32〜36）の設計依存計測手段 5 項目が「TBD（Phase 3 の SW205 で確定する）」と解消計画付きで明記され、網羅性確認（L129〜137）で `REQ-ID` ごとの `TC-ID` 範囲を追跡できる。
+  - `[ASDoQ:整合性-無矛盾性]`: `SW105` v3.1（L114〜145, L211, L217, L284, L287）の数値・許容誤差と `SWP6`（L75, L77, L79, L80, L102, L117, L124, L125, L126）の期待値が一致し、表1〜表4 の表タイトルもすべて表直上に配置されている。
+  - `[ASDoQ:理解容易性-非曖昧性（一意性）]` / `[ASDoQ:可読性-表現適切性]`: 曖昧語・指示語は検出されず（`dada_check.py lint` 0件）、全 TC の期待される出力が数値・文字列・件数で一意に判定可能であり、`style_check.py lint` Mid=0 / `verify` High=0 で自然な日本語を保っている。
+
+### 総合判定
+- **総合判定**: **APPROVED**（根拠: 未解消の High 0 件・Mid 0 件、Open 0 件、`dada_check.py all` 終了コード 0、第 5〜6 章の未実施リセット確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## 今回のレビュー（Phase 2 計画 v3.2 改訂、2026-11-17）
+
+- **レビュー日**: 2026-11-17
+- **レビュー担当**: `test-reviewer`（自己校正）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v3.2、第1〜4章。第5〜6章の未実施リセット維持確認を含む）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v3.2）
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0、Open: 0 件）
+
+### 機械チェック結果（ステップ1）
+- `python tools/dada_check.py all --summary`: 終了コード 0（`DADA-CHECK: OK | High 0 / Mid 0 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし、`要確認 1` は表中の `（0件）` 表記に対する形式検出でスケルトン残骸なし。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6`: 終了コード 0（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=10 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）。`要確認 10` は L104 鉤括弧列挙に対する `RULE-206`（誤検知）1件、複合名詞末尾「時」に対する `RULE-504` 8件、L172 改版履歴の `RULE-503` 1件であり、実欠陥なし。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-LINT: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | Mid=0 / 要確認=0`。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-VERIFY: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | High=0 / 要確認=0`。
+
+### 内容・網羅性・品質特性の検証（ステップ2〜3）
+- **テストケースの十分性と客観性**: `REQ-001`〜`REQ-007` の全 7 件に対し、正常系・異常系・境界値テスト（`TC-001`〜`TC-058`、合計 58 件：自動 46 件・手動 12 件）が網羅されている。
+  - `REQ-001`（`TC-004`〜`TC-013`, `TC-047`〜`TC-050`, `TC-054`〜`TC-057`）および `REQ-002`（`TC-014`）に、`SW105` v3.2 の改訂内容が漏れなく反映されている（第1〜第4シーンの自動遷移・処理バー廃止、`NEXT`/`Back` ボタン手動前後遷移、第1シーンの `Back` 非表示・第2〜第4シーンの両表示、各シーン 10秒放置非自動遷移およびボタン外クリック非遷移、第5シーン開始時の第4シーン文章・両ボタン非表示、第5シーン 5.0秒±0.2秒拡大と設定画面以降での両ボタン非表示、第5シーン中のみクリックでスキップ）。
+  - `REQ-005`（`TC-033`）に、残時間 0 時のジュワッチ音声発音時間 1.0秒（許容誤差 ±0.2秒、0.8秒以上 1.2秒以下）の継承が反映されている。
+  - 第 5〜6 章（L141〜158）は Phase 4 記入用の未実施状態が維持されており、架空の `Pass` 等は記入されていない。
+- **ASDoQ重点特性の根拠確認**:
+  - `[ASDoQ:保守性-持続可能性]`: 表1（L32〜36）の設計依存計測手段 5 項目が「TBD（Phase 3 の SW205 で確定する）」と解消計画付きで明記され、網羅性確認（L129〜137）で `REQ-ID` ごとの `TC-ID` 範囲を追跡できる。
+  - `[ASDoQ:整合性-無矛盾性]`: `SW105` v3.2（L112〜152, L210〜227, L273〜295）の仕様・数値・許容誤差と `SWP6`（L49〜61, L73〜83, L102, L116〜119, L123〜126）の期待値が一致し、表1〜表4 の表タイトルもすべて表直上に配置されている。
+  - `[ASDoQ:理解容易性-非曖昧性（一意性）]` / `[ASDoQ:可読性-表現適切性]`: 曖昧語・指示語は検出されず（`dada_check.py lint` 0件）、全 TC の期待される出力が数値・文字列・件数で一意に判定可能であり、`style_check.py lint` Mid=0 / `verify` High=0 で自然な日本語を保っている。
+
+### 総合判定
+- **総合判定**: **APPROVED**（根拠: 未解消の High 0 件・Mid 0 件、Open 0 件、`dada_check.py all` 終了コード 0、第 5〜6 章の未実施状態維持確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## 今回のレビュー（Phase 4 総合テスト報告書・v3.2 開発Loop改訂）
+
+- **レビュー日**: 2026-11-17
+- **レビュー担当**: `test-reviewer` ペルソナ（Phase 4 総合テスト報告書レビュー）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v3.2、第 5〜6 章）
+- **入力**: `SW105` v3.2、`SWP6` v3.2、`BUG101_バグ管理表.md`
+- **機械チェック**:
+  - `python tools/dada_check.py report --summary`: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0）
+  - `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=12 | DECISION1_MODE=off (local_rule_fallback)`
+  - `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-LINT: OK | Mid=0 / 要確認=0`
+  - `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-VERIFY: OK | High=0 / 要確認=0`
+- **実施結果の客観性確認**:
+  - 第 4 章の全 58 件（`TC-001`〜`TC-058`：自動 46 件・手動 12 件）が 5.2 節の表 3 に漏れなく記録され、すべて `Pass` であり、具体的な実行証跡（Playwright 計測値、画面座標、`AudioContext` 発音記録、スクリーンショット目視確認、Canvas 画素分布、単体・文書テスト結果）が記載されている。
+  - `BUG101` に未解決（`Open`）バグは 0 件（`B001` は解決済）。6.1 節および 6.2 節（`判定: Pass`）と数値が一致している。
+  - 5〜6 章の表タイトル（表 3、表 4）が表の上に配置され、本文から表番号で参照されている。
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0）
+- **総合判定**: **APPROVED**（根拠: 未解決の High 0 件、`dada_check.py report` 終了コード 0）
+
+---
+
+## 今回のレビュー（Phase 2 計画 v4.0 開発Loop改訂、2026-11-19）
+
+- **レビュー日**: 2026-11-19
+- **レビュー担当**: `test-reviewer`（自己校正・第1周）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v4.0、第1〜4章。第5〜6章の未実施リセット確認を含む）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v4.0）
+- **適用プロファイルと選択した品質特性**: `swp6` プロファイルに基づき、`C2_maintainability`（保守性）、`C3_consistency`（整合性）、`C4_understandability`（理解容易性）、`C5_readability`（可読性）の 4 特性を選択（理由: `asdoq_lint.py` 推奨 3 特性に加え、`JP-Humanizer` 8 観点評価対象である `C5` を検証するため）。
+- **指摘ID**: `R005`
+
+### 機械チェック・構造クロスリファレンス要約（ステップ1）
+- `python tools/dada_check.py all --summary`: 終了コード 0（`DADA-CHECK: 要対応（Mid指摘あり） | High 0 / Mid 7 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし。`Mid 7` は Phase 2 で新規追加した自動テスト `TC-059`〜`TC-063`, `TC-065`, `TC-066` に対応するテストコードが Phase 4 実施前のため未実装であることに起因し、Phase 4 で実装・解消予定。`要確認 1` は `（0件）` 表記に対する形式検出でスケルトン残骸なし。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6`: 終了コード 0（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=11 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）。`要確認 11` は L107 の鉤括弧列挙に対する `RULE-206` 1件、複合名詞末尾「時」に対する `RULE-504` 9件、L183 既版改版履歴の「変更に伴い」部分一致 `RULE-503` 1件であり、実欠陥なし。構造クロスリファレンスでは `未定義の表参照: []`・`Mermaid 10ノード上限超過: []`・`図表キャプション位置違反: []` を確認した。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-LINT: OK | Mid=0 / 要確認=0`。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-VERIFY: OK | High=0 / 要確認=0`。
+
+### 品質特性別評価サマリと根拠引用（ステップ2〜3）
+- **C2 保守性（合格）**: 第2.2節 表1（L27〜39）の設計依存計測・模擬手段 7項目すべてに `TBD（Phase 3 の SW205 で確定する）` と解消時期・方法が明記されており、第4章末尾「網羅性の確認」（L140〜148）で `REQ-001`〜`REQ-007` に対する `TC-001`〜`TC-066` の追跡範囲が示されている。
+- **C3 整合性・C4 理解容易性（要修正 1件: `R005`）**: `SW105` v4.0 の連想ゲーム1〜3の新タイトル（コロンなし）および新本文が `TC-006`〜`TC-008`, `TC-050`, `TC-054`, `TC-056` に一字一句転記され、BGM 切替時限（停止 0.2秒以内、開始 0.5秒以内）・無音フォールバック・3箇所クレジット（`README.md`・`LICENSE`・`extension/assets/SOURCES.md`）も `TC-037`, `TC-039`〜`TC-042`, `TC-059`〜`TC-066` に反映されている。第5〜6章（L152〜170）も Phase 4 用に未実施リセットされている。ただし、`TC-059`（L131）の「`同時再生 1件`」と `TC-060`（L132）の「`同時再生 0件`」で同一語「同時再生」の意味が逆転しており、また `TC-060` の Back 復帰時の「先頭から」再生条件が省略されている点を `R005`（Mid）として指摘する。
+- **C5 可読性（合格）**: `style_check.py lint` Mid=0 / 要確認=0、`verify` High=0 / 要確認=0 であり、第3.2節（L46）や `TC-004`〜`TC-066` の主語・操作対象・期待出力が簡潔で一貫した常体で記述されている。
+
+### 指摘一覧（v4.0 Phase 2）
+以下の表3に Phase 2（v4.0）のレビュー指摘を記録する。
+
+**表3：Phase 2（v4.0）レビュー指摘記録**
+| 指摘ID | 発生日 | 重要度 | 対象ドキュメント・箇所 | 指摘内容 | 修正提案 | 対応結果・修正内容 | ステータス |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| R005 | 2026-11-19 | Mid | SWP6 / 第4章 `TC-059`（L131）、`TC-060`（L132） | `[ASDoQ:理解容易性-非曖昧性（一意性）]` `[ASDoQ:整合性-無矛盾性]` `TC-059` で「`同時再生 1件`」（単一曲のみ再生の意）と記述し、`TC-060` で「`同時再生 0件`」（重複再生なしの意）と記述しているため、「同時再生」という用語の解釈が 2通りに分かれている。あわせて、`TC-060` の `Back` 遷移（第4→第3、第3→第2）で `SW105` REQ-001 処理(2)(3) の「先頭からループ再生する」条件が明示されていない。❌ Before: `TC-059`: `第2シーン突入から 0.5秒以内に同梱の『ジムノペディ第1番』が先頭から再生開始する（同時再生 1件）。` / `TC-060`: `第4→第3 Back時は 0.5秒以内に再開し、第3→第2 Back時は 0.2秒以内に停止して 0.5秒以内に『ジムノペディ第1番』へ切り替わる（同時再生 0件）。` | ✅ After: `TC-059`: `第2シーン突入から 0.5秒以内に同梱の『ジムノペディ第1番』が先頭から再生開始する（再生中の曲数は 1曲であり、重複再生は 0件）。` / `TC-060`: `第4→第3 Back時は 0.5秒以内に先頭からループ再生を再開し、第3→第2 Back時は 0.2秒以内に停止して 0.5秒以内に『ジムノペディ第1番』へ先頭から切り替わりループ再生する（再生中の曲数は 1曲であり、重複再生は 0件）。` | `TC-059`（L131）と `TC-060`（L132）の文言を「再生中の曲数は 1曲であり、重複再生は 0件」へ統一し、`TC-060` の `Back` 遷移へ「先頭からループ再生」を追記した。2026-11-19 の第2周再レビューで解消を確認した。 | Closed |
+
+### 第2周再レビュー（2026-11-19）
+- **対象**: `Open` だった `R005` および修正後の `TC-059`（L131）・`TC-060`（L132）
+- **再検査結果**:
+  - `python tools/dada_check.py all --summary`: 終了コード 0（`DADA-CHECK: 要対応（Mid指摘あり） | High 0 / Mid 7 / 要確認 1 | 対象: SW105, SW205, SWP6`。`Mid 7` は Phase 4 未実装の新規自動 `TC-059`〜`TC-063`, `TC-065`, `TC-066` によるもの）
+  - `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: 終了コード 0（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=11 | DECISION1_MODE=off (local_rule_fallback)`）
+  - `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-LINT: OK | Mid=0 / 要確認=0`
+  - `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-VERIFY: OK | High=0 / 要確認=0`
+- **指摘件数**: 累計 1件（High: 0 / Mid: 1 / Low: 0）、`Open` 0件（`R005` は `Closed`）。
+- **総合判定**: **REVIEW: APPROVED**（根拠: 未解消の High 0件・Mid 0件・Open 0件、`dada_check.py all` 終了コード 0、`asdoq_lint.py` High=0 / Mid=0、`style_check.py` lint Mid=0 / verify High=0、全 `REQ-001`〜`REQ-007` 網羅、第5〜6章の未実施リセット確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## 今回のレビュー（Phase 4 総合テスト報告書・v4.0 開発Loop改訂）
+
+- **レビュー日**: 2026-11-19
+- **レビュー担当**: `test-reviewer` ペルソナ（Phase 4 総合テスト報告書レビュー）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v4.0、第5〜6章）
+- **入力**: `SW105` v4.0、`SWP6` v4.0、`BUG101_バグ管理表.md`
+- **機械チェック**:
+  - `python tools/dada_check.py report --summary`: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0）
+  - `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=14 | DECISION1_MODE=off (local_rule_fallback)`（終了コード 0）
+  - `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-LINT: OK | Mid=0 / 要確認=0`（終了コード 0）
+  - `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-VERIFY: WARN | High=0 / 要確認=1`（終了コード 0、第5.1節への `Pass` 集計表記追加に伴う既知の差分のみ）
+- **実施結果の客観性確認**:
+  - 第4章の全 66件（`TC-001`〜`TC-066`：自動 53件・手動 13件）が第5.2節の表3に漏れなく記録され、すべて `Pass` であり、具体的な実行証跡（Playwright 計測時刻、要素矩形、スクリーンショット目視、Web Audio フック実測、Canvas 画素分布、SHA-256 照合、単体・文書テスト結果、および `TC-059` 初回コールドデコード 1247.5ms と先行デコード後 4.1ms 開始の実測値）が客観的に記載されている。
+  - `BUG101` に未解決（`Open`）バグは 0件（`B001` は解決済）。第6.1節および第6.2節（`判定: Pass`）と数値が一致している。
+  - 第5〜6章の表タイトル（表3、表4）が表の直上に配置され、本文から表番号で参照されている。
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0）
+- **総合判定**: **REVIEW: APPROVED**（根拠: 未解決の High 0件、`dada_check.py report` 終了コード 0、`asdoq_lint.py` High=0 / Mid=0、`style_check.py lint` Mid=0）
+
+---
+
+## 今回のレビュー（Phase 2 計画 v4.1 開発Loop改訂、2026-11-20）
+
+- **レビュー日**: 2026-11-20
+- **レビュー担当**: `test-reviewer`（自己校正）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v4.1、第1〜4章。承認状態 `計画承認待ち` および第5〜6章の Phase 4 用未実施リセット確認を含む）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v4.1）
+- **適用プロファイルと選択した品質特性**: `swp6` プロファイルに基づき、`C2_maintainability`（保守性）、`C3_consistency`（整合性）、`C4_understandability`（理解容易性）、`C5_readability`（可読性）の 4特性を選択（理由: `asdoq_lint.py` 推奨 3特性に加え、`JP-Humanizer` 8観点評価対象である `C5` を検証するため）。
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0、Open: 0 件）
+
+### 機械チェック・構造クロスリファレンス要約（ステップ1）
+- `python tools/dada_check.py all --summary`: 終了コード 0（`DADA-CHECK: 要対応（Mid指摘あり） | High 0 / Mid 4 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし。`Mid 4` は Phase 2 で新規追加した自動テスト `TC-067`〜`TC-070` に対応するテストコードが Phase 4 実施前のため未実装であることに起因し、Phase 4 で実装・解消予定。`要確認 1` は表中の `（0件）` 表記に対する形式検出でスケルトン残骸なし。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6`: 終了コード 0（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=13 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）。`要確認 13` は L108（`TC-035`）の鉤括弧列挙に対する `RULE-206`（誤検知）1件、複合名詞末尾「時」（「再生時」「遷移時」「終了時」等）に対する `RULE-504`（誤検知）11件、および L188（v3.2 改版履歴）の「変更に伴う」への部分一致 `RULE-503`（誤検知）1件であり、実欠陥なし。構造クロスリファレンスでは `類似表記ゆれペア: []`・`未定義の図参照: []`・`未定義の表参照: []`・`Mermaid 10ノード上限超過: []`・`図表キャプション位置違反: []` を確認した。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-LINT: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | Mid=0 / 要確認=0`（終了コード 0）。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-VERIFY: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | High=0 / 要確認=0`（終了コード 0）。
+
+### 品質特性別評価サマリと根拠引用（ステップ2〜3）
+- **C2 保守性（合格）**: 第2.2節 表1（L27〜40）に設計依存の計測・模擬手段 8項目（新規追加した L36 `PCM WAV 音質・振幅・ループ境界ギャップの計測手段` を含む）がすべて `TBD（Phase 3 の SW205 で確定する）` と解消時期・方法付きで明記されている。第4章末尾「網羅性の確認」（L145〜153）には `REQ-001`〜`REQ-007` ごとの `TC-001`〜`TC-070`（70件：自動 57件・手動 13件）の追跡範囲が示されており、要求変更時の影響テスト特定が容易である。
+- **C3 整合性（合格）**: `SW105` v4.1 の第3シーン新 BGM「オリジナル・怪獣出現風オーケストラ楽曲」に関する全要件（4要素構成、非人声合成 PCM WAV、`44.1kHz（44100Hz）以上`、`16bit`、`ステレオ（2チャンネル）`、最大正規化振幅 `0.30 以上 0.95 以下`、ループ境界無音ギャップ `0.05秒未満`、接続点正規化振幅差 `0.05 以下`、停止 `0.2秒以内`・開始 `0.5秒以内`、`MIT License`、既存怪獣映画・特撮番組テーマ曲や劇伴の主旋律・編曲非複製、人声録音・第三者無断録音不使用、配布文書3箇所への制作方針・構成要素・音質仕様・同梱ファイル名・`MIT License`・SHA-256 記載、および第2シーン『ジムノペディ第1番』・第4シーン無音・第5シーン以降・タイマー・1秒ジュワッチ・ドット飛散の v4.0 仕様維持）が、第2.1節（L22）、第3.1〜3.3節（L44〜65）、`TC-040`〜`TC-041`（L113〜114）、`TC-060`〜`TC-070`（L133〜143）と矛盾なく一致している。第5〜6章（L157〜174）も Phase 4 用に未実施リセットされており（L7 `承認状態: 計画承認待ち`、L167 表3未実施、L174 `**判定: 未実施**`）、表1〜表4（L27, L71, L164, L179）のタイトルはいずれも表直上に配置され本文（L25, L69, L162, L177）から参照されている。
+- **C4 理解容易性（合格）**: 曖昧語・指示語は 0件（`dada_check.py lint` 0件、`asdoq_lint.py` `High=0 / Mid=0`）。`TC-067`・`TC-068`（音質・ステレオ・振幅・接続点振幅差の正常系と境界合格／境界不合格サンプル）および `TC-069`・`TC-070`（シームレスループ境界無音ギャップ `0.049秒` 合格 vs `0.050秒` 不合格、接続点振幅差 `0.05` 合格 vs `0.06` 不合格）、さらに `TC-040`・`TC-064`（手動観測）と `TC-065`・`TC-066` の期待出力が数値・条件・文字列・件数で一意に判定可能であり、第3.3節（L50）で Product Owner マサによる曲調の好み・非模倣最終適否等の公開前確認を Phase 5 検収として切り分けている。なお、v4.0 `TC-064` の「残響音が発生しない」は、新 BGM の「ステレオ残響」と混同しないよう「旧シーン BGM の音漏れや 2曲以上の重複再生が発生しない」（L137）へ正確に改訂されている。
+- **C5 可読性（合格）**: `style_check.py lint` Mid=0 / 要確認=0、`style_check.py verify` High=0 / 要確認=0 であり、第2.1節（L22）・第3.2節（L47）・第3.3節（L50, L60）・第5〜6章（L159, L171）を含め、110文字以内の明確な主述・常体統一・自然な日本語で記述されている。
+
+### 総合判定
+- **総合判定**: **REVIEW: APPROVED**（根拠: 指摘 0件・未解消の High 0件・Mid 0件・Open 0件、`dada_check.py all` 終了コード 0、`asdoq_lint.py` High=0 / Mid=0、`style_check.py` lint Mid=0 / verify High=0、全 `REQ-001`〜`REQ-007`（70件）網羅、承認状態 `計画承認待ち` および第5〜6章の未実施リセット確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## 今回のレビュー（Phase 2 計画 v4.2 開発Loop改訂、2026-11-20）
+
+- **レビュー日**: 2026-11-20
+- **レビュー担当**: `test-reviewer` + `asdoq-reviewer`（自己校正・第1周〜第2周）
+- **対象**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v4.2、第1〜4章。承認状態 `計画承認済（自律型事前委譲、2026-11-20、Product Owner マサ）` および第5〜6章の Phase 4 用未実施状態維持確認を含む）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v4.2）
+- **適用プロファイルと選択した品質特性**: `swp6` プロファイルに基づき、`C2_maintainability`（保守性）、`C3_consistency`（整合性）、`C4_understandability`（理解容易性）、`C5_readability`（可読性）の 4特性を選択（理由: `asdoq_lint.py` 推奨 3特性に加え、`JP-Humanizer` 8観点評価対象である `C5` を検証するため。`--decision1` は既定の `off`）。
+- **指摘ID**: `R006`〜`R008`
+
+### 機械チェック・構造クロスリファレンス要約（第1周 → 第2周修正後）
+- `python tools/dada_check.py all --summary`: 終了コード 0（`DADA-CHECK: 要対応（Mid指摘あり） | High 0 / Mid 2 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし。`Mid 2` は Phase 2 で新規追加した自動テスト `TC-071`・`TC-072` に対応するテストコードが Phase 4 実施前のため未実装であることに起因し、Phase 4 で実装・解消予定。`要確認 1` は表中の `（0件）` 表記に対する形式検出でスケルトン残骸なし。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6`:
+  - 第1周（修正前）: `High=0 / Mid=1 / 要確認=12`。`TC-035`（L109）で `RULE-605`（格助詞「の」の3回連続）が検出された（`R007` として記録）。
+  - 第2周（修正後）: 終了コード 0（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=12 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）。`要確認 12` は L109（`TC-035`）の鉤括弧列挙に対する `RULE-206`（誤検知）1件、複合名詞末尾「時」（「再生時」「遷移時」「終了時」等）に対する `RULE-504`（誤検知）10件、および L191（v3.2 改版履歴）に対する `RULE-503`（誤検知）1件であり、実欠陥なし。構造クロスリファレンスでは `類似表記ゆれペア: []`・`未定義の図参照: []`・`未定義の表参照: []`・`Mermaid 10ノード上限超過: []`・`図表キャプション位置違反: []` を確認した。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`:
+  - 第1周（修正前）: `STYLE-LINT: WARN | Mid=2 / 要確認=0`（L48 146文字、L61 121文字を `R006` として記録）。
+  - 第2周（修正後）: 終了コード 0（`STYLE-LINT: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | Mid=0 / 要確認=0`）。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: 終了コード 0（`STYLE-VERIFY: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | High=0 / 要確認=0`）。
+
+### 品質特性別評価サマリと根拠引用（ステップ2〜3）
+- **C2 保守性（合格）**: 第2.2節 表1（L27〜41）に設計依存の計測・模擬手段 9項目（新規追加した L37 `ジュワッチ音声の発音時間・エンベロープ・帯域エネルギー（「ため」・語尾「チ」）の計測手段` を含む）がすべて `TBD（Phase 3 の SW205 で確定する）` と解消時期・方法付きで明記されている。第4章末尾「網羅性の確認」（L148〜156）に `REQ-001`〜`REQ-007` ごとの `TC-001`〜`TC-072`（72件：自動 59件・手動 13件、`REQ-005` は `TC-032`〜`TC-036` および `TC-071`〜`TC-072` の 7件）の追跡範囲が示され、要求変更時の影響テスト特定が可能である。
+- **C3 整合性（合格）**: `SW105` v4.2 の `REQ-005`・`REQ-006`・第6.1節の数値および条件（総発音時間 `0.8秒以上 1.2秒以下`、全体ピーク正規化振幅 `0.10 以上 0.99 以下`・非クリッピング、前半「ジュワッ」部 `0.40秒以上 0.65秒以下`・区間ピーク比 `30% 以上`、促音「ため」区間 `0.10秒以上 0.30秒以下`・区間内 RMS 比 `15% 以下`、語尾「チ」部 `0.15秒以上 0.35秒以下`・`3kHz〜8kHz` アタック成分＋母音 `/i/`・ピーク比 `0.60 以上`、オフライン合成結合および加工済み音声再配布許諾、クレジット表記 `VOICEVOX:四国めたん` および `juwacchi.wav` 3箇所記載）と、`SWP6` の第1.1〜1.2節（L11〜14）、第3.1〜3.3節（L45〜66）、`TC-033`・`TC-035`・`TC-040`・`TC-041`・`TC-071`・`TC-072`（L107, L109, L114〜115, L145〜146）が矛盾なく一致している。v4.1 の `TC-001`〜`TC-070`（`kaiju-orchestra.wav` 関連 `TC-060`〜`TC-070` 含む）もすべて継承され、第5〜6章（L160〜177）は Phase 4 用に未実施状態（L170 表3 1行、L177 `**判定: 未実施**`）を維持し、表1〜表4（L27, L72, L167, L182）のタイトルはいずれも表直上に配置され本文（L25, L70, L165, L180）から参照されている。
+- **C4 理解容易性（第1周 `R008` 修正後・合格）**: 曖昧語・指示語は 0件（`dada_check.py lint` 0件、`asdoq_lint.py` `High=0 / Mid=0`）。`TC-071`（実測プロソディ全項目）および `TC-072`（境界合格サンプル `0.80秒`/`1.20秒`、`0.10`/`0.99`、`0.40秒`/`0.65秒`・`0.30`、`0.10秒`/`0.30秒`・`0.15`、`0.15秒`/`0.35秒`・`0.60`・`3kHz〜8kHz`＋`/i/` 対 境界不合格サンプル `0.79秒`/`1.21秒`、`0.09`/`1.00`、`0.39秒`/`0.66秒`・`0.29`、`0.09秒`/`0.31秒`・`0.16`、`0.14秒`/`0.36秒`・`0.59`・`3kHz〜8kHz` アタック不足）の期待出力が数値・条件で一意に判定可能であり、第3.3節（L51）で Product Owner マサによるジュワッチ音声の最終聴感適否を Phase 5 検収として切り分けている。
+- **C5 可読性（第1周 `R006` 修正後・合格）**: 修正後の `style_check.py lint` は `Mid=0 / 要確認=0`、`style_check.py verify` は `High=0 / 要確認=0` であり、第3.2節（L48）、第3.3節（L61）、`TC-033`・`TC-040`・`TC-071` を含め、一文一義・常体統一・自然な日本語を保っている。
+
+### 指摘一覧（v4.2 Phase 2）
+以下の表4に Phase 2（v4.2）の自己校正レビュー指摘と第2周での修正結果を記録する。
+
+**表4：Phase 2（v4.2）レビュー指摘記録**
+| 指摘ID | 発生日 | 重要度 | 対象ドキュメント・箇所 | 指摘内容 | 修正提案 | 対応結果・修正内容 | ステータス |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| R006 | 2026-11-20 | Mid | SWP6 / 第3.2節（L48）、第3.3節（L61） | `[ASDoQ:可読性-簡潔性]` `[ASDoQ:理解容易性-非曖昧性（一意性）]` `style_check.py lint` で L48 が 146文字、L61 が 121文字（上限 110文字超過）として検出された。❌ Before: L48 `語尾「チ」部では、継続時間 0.15秒以上 0.35秒以下、歯茎硬口蓋破擦音 /tɕ/ の高域帯域 3kHz〜8kHz アタック成分（「ため」区間の 3kHz〜8kHz 平均エネルギーより高い立ち上がり）と母音 /i/ の有無、およびピーク比 0.60 以上について境界値と境界外側を確認する。` / L61 `- TC-040（ピコン音・v4.2 ジュワッチ音声「ジュワッチ」発話・第2シーン『ジムノペディ第1番』・v4.1 第3シーン オリジナル・怪獣出現風オーケストラ楽曲の合成・4要素・非複製・禁止名称非発話確認、および同梱画像の非実写・非公式確認）` | ✅ After: L48 を 2文（継続時間・ピーク比の境界検証と、`/tɕ/` `3kHz〜8kHz` アタック・母音 `/i/` の有無確認）へ分割し、L61 の括弧内説明を 110文字以内の要旨へ整理する。 | L48 を 2文へ分割し、L61 を 93文字へ整理した。再検査の `style_check.py lint` で `Mid=0` を確認した。 | Closed |
+| R007 | 2026-11-20 | Mid | SWP6 / 第4章 `TC-035`（L109） | `[ASDoQ:規範適合性-文法適合性]` `RULE-605`: 期待される出力で格助詞「の」が 3回連続し、`asdoq_lint.py` で Mid として検出された。❌ Before: `「音声合成のエンジンと声の利用許諾が加工済み音声の再配布を含めて許すこと」` | ✅ After: `「音声合成エンジンおよび声の利用許諾が加工済み音声の再配布を含めて許すこと」` | `TC-035`（L109）を修正案のとおり更新し、再検査の `asdoq_lint.py --profile swp6` で `High=0 / Mid=0` を確認した。 | Closed |
+| R008 | 2026-11-20 | Mid | SWP6 / 第4章 `TC-040`（L114） | `[ASDoQ:理解容易性-非曖昧性（一意性）]` `[ASDoQ:可読性-簡潔性]` 期待される出力の第3文が 182文字と長く、非人声合成 PCM WAV の構成要件と既存楽曲非複製・非引用要件が 1文に混在している。❌ Before: `v4.1 第3シーン BGM は人の声による録音や第三者による無断録音ではなく、重厚な低音金管（ホルン／トロンボーン）・不穏でドラマチックな弦楽アンサンブル・力強いティンパニ打楽器・広がりのあるステレオ残響を備えた非人声合成 PCM WAV のオリジナル・怪獣出現風オーケストラ楽曲であり、既存怪獣映画や特撮番組のテーマ曲・劇伴の主旋律および編曲を複製・引用しない。` | ✅ After: `v4.1 第3シーン BGM は人の声による録音や第三者による無断録音ではなく、重厚な低音金管（ホルン／トロンボーン）・不穏でドラマチックな弦楽アンサンブル・力強いティンパニ打楽器・広がりのあるステレオ残響を備えた非人声合成 PCM WAV のオリジナル・怪獣出現風オーケストラ楽曲である。既存怪獣映画や特撮番組のテーマ曲・劇伴の主旋律および編曲を複製・引用しない。` | `TC-040`（L114）の期待される出力を 2文へ分割した。第2周再検査で全チェック通過を確認した。 | Closed |
+
+### 第2周再レビューと総合判定（2026-11-20）
+- **対象**: `Closed` とした `R006`〜`R008` および修正後の `SWP6` v4.2（L1〜194）
+- **再検査結果**:
+  - `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: 終了コード 0（`STYLE-LINT: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | Mid=0 / 要確認=0`）
+  - `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: 終了コード 0（`STYLE-VERIFY: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | High=0 / 要確認=0`）
+  - `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: 終了コード 0（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=12 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）
+  - `python tools/dada_check.py all --summary`: 終了コード 0（`DADA-CHECK: 要対応（Mid指摘あり） | High 0 / Mid 2 / 要確認 1 | 対象: SW105, SW205, SWP6`）
+- **指摘件数**: 累計 3件（High: 0 / Mid: 3 / Low: 0）、残 Open: 0件（Open High: 0件 / Open Mid: 0件）
+- **総合判定**: **REVIEW: APPROVED**（根拠: 残 Open High 0件・Open Mid 0件、`dada_check.py all` 終了コード 0、`asdoq_lint.py --profile swp6` High=0 / Mid=0、`style_check.py lint` Mid=0 / `verify` High=0、全 `REQ-001`〜`REQ-007`（72件）網羅、承認状態 `計画承認済（自律型事前委譲、2026-11-20、Product Owner マサ）` および第5〜6章の未実施状態維持確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## v4.2 Phase 4 総合テスト報告書レビュー記録（2026-11-20）
+
+- **レビュー種別**: Phase 4 完了後レビュー（Section B：テスト実施結果・報告書レビュー）
+- **対象ファイル**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v4.2、L1〜272）
+- **思考過程**:
+  - **①現在地**: Phase 4（実装・総合テスト報告）完了後の `SWP6` 報告書（第5〜6章・表3・表4・承認状態）を `test-reviewer` として検証する。
+  - **②判断の根拠**: `dada_check.py report --summary`（`High 0 / Mid 0 / 要確認 0`）、`asdoq_lint.py --profile swp6 --summary`（`High=0 / Mid=0 / 要確認=12`、推奨特性 `C2_maintainability,C3_consistency,C4_understandability`）、`style_check.py lint --summary`（`Mid=0 / 要確認=0`）、および `style_check.py verify`（`High=0 / 要確認=0`）の実測結果に基づき、さらに `C2_maintainability`・`C3_consistency`・`C4_understandability`・`C5_readability` の反証観点で第5〜6章の実測証跡と客観性を突合した。
+  - **③次の一手**: 全 72件の記録網羅・実測数値・ASDoQ 適合性を確認し、Phase 4 報告書の承認判定（`REVIEW: APPROVED`）を記録する。
+- **検査結果**:
+  - `python tools/dada_check.py report --summary`: 終了コード 0（`DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`）
+  - `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: 終了コード 0（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=12 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）
+  - `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: 終了コード 0（`STYLE-LINT: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | Mid=0 / 要確認=0`）
+  - `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: 終了コード 0（`STYLE-VERIFY: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | High=0 / 要確認=0`）
+- **ASDoQ・内容妥当性評価（証拠引用）**:
+  - `[ASDoQ:保守性-持続可能性]` / `[ASDoQ:整合性-無矛盾性]`: `SWP6` L7 で `承認状態: 報告書承認済（自律型事前委譲、2026-11-20、Product Owner マサ）` へ更新され、`5.1`（L162〜167）に対象版数 `4.2.0`、環境（`Windows-11-10.0.26300-SP0`、Node.js `v22.23.4`、Python `3.15.1`、Chromium `158.0.8127.18`）、単体 61件 Pass・総合 72件 Pass（自動 59件・手動 13件、Fail 0 / Skipped 0）が明記されている。
+  - `[ASDoQ:理解容易性-非曖昧性（一意性）]` / `[ASDoQ:整合性-一貫性]`: `表3`（L172〜246）に `TC-001`〜`TC-072` 全 72件の実測結果が `Pass` として 1対1 で記載され、手動 13件（`TC-005, 007, 012, 024, 025, 028, 033, 040, 044, 045, 050, 054, 064`）および `TC-067`, `TC-069`, `TC-071`, `TC-072` の実測数値（`59988ms`, `995.9ms`, `14.28秒`, 4象限画素数、`juwacchi.wav` `1.000s`/ピーク `0.900` 等）が欠落なく記録されている。`6.1`〜`6.2`（L248〜255）は `BUG101` の未解決 0件と合致して `**判定: Pass**` を宣言し、`表4`（L272）の版数 `4.2` に Phase 4 完了記録を追記している。
+  - `[ASDoQ:可読性-簡潔性]` / `[ASDoQ:可読性-表現適切性]`: 第5〜6章に `JP-Humanizer` 3ステップを適用し、`style_check.py lint`（`Mid=0`）および `style_check.py verify`（`High=0`）の双方を合格した。
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0。Phase 4 報告書レビュー 残 Open High 0件 / Open Mid 0件）
+- **総合判定**: **REVIEW: APPROVED**（根拠: 残 Open High 0件・Open Mid 0件、`dada_check.py report` 終了コード 0、`asdoq_lint.py --profile swp6` High=0 / Mid=0、`style_check.py lint` Mid=0 / `verify` High=0、全 72件の客観的実測記録・`BUG101` 未解決 0件・総合判定 `Pass` の整合性を確認済み）
+
+---
+
+## v4.3 Phase 2 総合テスト仕様書（計画：1〜4章）レビュー記録（2026-11-21）
+
+- **レビュー種別**: Phase 2 計画レビュー（Section A：第1〜4章および第5〜6章の未実施リセット確認）
+- **レビュー担当**: `test-reviewer` + `asdoq-reviewer`（自己校正・第1周）
+- **対象ファイル**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v4.3、L1〜200）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v4.3）
+- **適用プロファイルと選択した品質特性**: `swp6` プロファイルに基づき、`C2_maintainability`（保守性）、`C3_consistency`（整合性）、`C4_understandability`（理解容易性）、`C5_readability`（可読性）の 4特性を選択（理由: `asdoq_lint.py` 推奨 3特性に加え、`JP-Humanizer` 8観点評価対象である `C5` を検証するため。`--decision1` は既定の `off`）。
+- **思考過程**:
+  - **①現在地**: `SW105` v4.3 の承認および自律型事前委譲を受け、改訂版 `SWP6` v4.3（第1〜4章の計画および第5〜6章の未実施リセット状態）を `test-reviewer` として反証駆動レビューする。
+  - **②判断の根拠**: `dada_check.py all`・`asdoq_lint.py --profile swp6`・`style_check.py lint`・`style_check.py verify` の実測結果と `SW105` v4.3 との全件突合に基づき、網羅性・数値境界・設計非先回り・ASDoQ 4重点特性を検証する。
+  - **③次の一手**: 指摘有無を記録し、High/Mid 0件かつ全重点特性の根拠確認を完了したうえで `REVIEW: APPROVED` を記録する。
+
+### ステップ1：機械チェック・構造クロスリファレンス要約
+- `python tools/dada_check.py all`: 終了コード `0`（`DADA-CHECK: 要対応（Mid指摘あり） | High 0 / Mid 3 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし。`Mid 3` は Phase 2 で新規追加した自動テスト `TC-073`・`TC-074`・`TC-075` に対応するテストコードが Phase 4 実施前のため未実装であることに起因し、Phase 4 で実装・解消予定。`要確認 1` は表中の `（0件）` 表記に対する形式検出でありスケルトン残骸なし。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6`: 終了コード `0`（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=17 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）。`要確認 17` の内訳は L111・L114 の複合並列表記に対する `RULE-206`（誤検知）2件、複合名詞末尾「時」（「開始時」「再生時」「変更時」等）に対する `RULE-504`（誤検知）13件、および L196・L200 既版改版履歴の「変更に伴う」への部分一致 `RULE-503`（誤検知）2件であり、実欠陥なし。構造クロスリファレンスでは `類似表記ゆれペア: []`・`未定義の図参照: []`・`未定義の表参照: []`・`Mermaid 10ノード上限超過: []`・`図表キャプション位置違反: []` を確認した。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: 終了コード `0`（`STYLE-LINT: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | Mid=0 / 要確認=0`）。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: 終了コード `0`（`STYLE-VERIFY: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | High=0 / 要確認=0`）。
+
+### ステップ2〜3：内容・網羅性・ASDoQ重点特性の評価（根拠引用）
+- **C2 保守性（合格）**: 第2.2節 表1（L27〜43）において、新規追加した `BGM 再生時実効音量（全区間 RMS 基準の dBFS）の比較計測手段`（L37）・`ジュワッチ音声の発音時間・男性基本周波数（F0）・語尾音量バランス・3kHz〜8kHz 帯域の計測手段`（L38）・`表示要素の非重複・見切れ・スクロールバー有無の計測手段`（L41）を含む設計依存の 10項目すべてに `TBD（Phase 3 の SW205 で確定する）` と解消計画が明記されており、`SW205` の構造を前提に先回りしていない。第4章末尾「網羅性の確認」（L153〜161）で `REQ-001`〜`REQ-007` に対する `TC-001`〜`TC-075`（75件：自動 62件・手動 13件、`TC-075` 共用明記）の追跡範囲を確認した。
+- **C3 整合性（合格）**: `SW105` v4.3 の4大改訂点がすべて矛盾なく反映されている。
+  1. 第3シーン BGM 音量抑制: 第2.1節（L22）、第3.2節（L50）、`TC-064`（L140）、`TC-065`（L141）、`TC-073`（L149）、`TC-074`（L150）に、第2シーン『ジムノペディ第1番』との再生時実効音量差（全区間 RMS 基準の dBFS）`±3.0 dB` 以内・非クリッピング、および境界値（`+3.0/-3.0 dB` 合格対 `+3.1/-3.1 dB`・クリッピング不合格）が一致している。
+  2. 男性声自然な「ジュワッチ」発音: 第3.2節（L50）、第3.3節（L62〜63）、`TC-033`（L109）、`TC-035`（L111）、`TC-040`（L116）、`TC-041`（L117）、`TC-071`（L147）、`TC-072`（L148）において v4.2 の「ため」形成と過度な語尾「チ」強調を撤廃し、`PCM WAV 24000Hz以上・16bit・モノラル`・`0.8〜1.2秒`・`0.10〜0.99`・`F0 中央値 85〜180 Hz`（女性声域 `220 Hz 以上` 不使用）・後半 35% ピーク比 `0.15〜0.85`・後半 `3kHz〜8kHz RMS <= 前半全帯域 RMS` および全境界上下限が `SW105` v4.3 REQ-005 と一致している。`TC-035`・`TC-041` でも Phase 3 確定前の話者名を固定せず利用許諾・クレジット方針確認として整理されている。
+  3. 連想ゲーム2日本語改訂および全画面・説明文の日英常時併記: `TC-004`〜`TC-008`（L80〜84）、`TC-010`〜`TC-012`（L86〜88）、`TC-020`（L96）、`TC-037`〜`TC-038`（L113〜114）、`TC-050`（L126）、`TC-054`（L130）、`TC-056`（L132）、`TC-075`（L151）に、第1〜第4シーンのタイトル（全角コロン「：」なし）と日英本文（空行区切り、連想ゲーム2の `1967年1月22日放送のTV番組` および `お約束通りにヒーローに倒されたが` を含む）、スタートボタン `スタート / START`、言語切替ボタン非存在、表示非重複・見切れ・スクロールバーなし、および `extension/manifest.json`（`description` 132文字以内・132/133文字境界）・`extension/store-listing.txt`・配布文書 3箇所の反映が一致している。
+  4. 計画状態・表形式: ヘッダ（L5〜7）は `版数: 4.3`・`最終更新日: 2026-11-21`・`承認状態: 計画承認済（自律型事前委譲、2026-11-21、Product Owner マサ）`、第5〜6章（L165〜182）は Phase 4 用未実施リセット（架空の `Pass` なし、`表3` 1行 `未実施`、`6.2` `**判定: 未実施**`）、`表4`（L200）に版数 `4.3` が追記され、表1〜表4（L27, L74, L172, L187）のタイトルはいずれも表直上に配置され本文（L25, L72, L170, L185）から参照されている。
+- **C4 理解容易性（合格）**: 曖昧語・指示語は 0件（`dada_check.py lint` 0件、`asdoq_lint.py` `High=0 / Mid=0`）。`TC-001`〜`TC-075` すべての期待される出力が数値・文字列・件数で一意に判定でき、第3.3節（L53）で Product Owner マサの公開前聴感・外観・法務確認を Phase 5 検収として分離している。
+- **C5 可読性（合格）**: `style_check.py lint`（`Mid=0 / 要確認=0`）および `style_check.py verify`（`High=0 / 要確認=0`）の双方を合格し、長文・過剰装飾・AI-Slop 表現がなく簡潔な常体で記述されている。
+
+### ステップ4：指摘件数と総合判定
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0。残 Open High 0件 / Open Mid 0件）
+- **総合判定**: **REVIEW: APPROVED**（根拠: 残 Open High 0件・Open Mid 0件、`dada_check.py all` 終了コード 0、`asdoq_lint.py --profile swp6` High=0 / Mid=0、`style_check.py lint` Mid=0 / 要確認=0、`style_check.py verify` High=0 / 要確認=0、全 `REQ-001`〜`REQ-007`（75件：自動 62件・手動 13件）網羅、第5〜6章の未実施リセット確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## v4.3 Phase 4 総合テスト報告書レビュー記録（2026-11-21）
+
+### ステップ1：機械チェックの実行
+- **レビュー日**: 2026-11-21
+- **対象文書**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（版数 4.3、第5〜6章報告書締結版）
+- **実行コマンドと結果**:
+  - `python tools/dada_check.py report --summary`: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0）
+  - `python tools/dada_check.py all --summary`: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 1 | 対象: SW105, SW205, SWP6`（終了コード 0）
+  - `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --summary`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=18`（`DECISION1_MODE=off`）
+  - `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-LINT: OK | Mid=0 / 要確認=0`
+  - `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: `STYLE-VERIFY: OK | High=0 / 要確認=0`
+
+### ステップ2：報告内容と形式の検証（第1周）
+- **C1 目的適合性・第5.1節実行環境**: 実行日時（2026-11-21 14:41 及び 14:44〜14:45）、OS・Node.js v22.23.4・Python 3.15.1・Playwright 1.65.0・Chromium 158.0.8127.18、対象版数 ColorBeaconTimer 4.3.0、全 75件集計（Pass 75 / Fail 0 / Skipped 0、単体 63件 Pass、システム 8ケース Pass）、ならびに `juwacchi.wav` と BGM 実効音量の実測値が漏れなく記載されている。
+- **C3 整合性・第5.2節 表3 網羅性**: `TC-001`〜`TC-075` の全 75件（自動 62件・手動 13件）すべてに実行日時、`Pass` 判定、具体的な実測値・出力（`juwacchi.wav` 48,044B・F0 中央値 `130.4 Hz`・後半比 `0.480`・高域 RMS 比 `0.134`、第2/第3 BGM 実効音量 `-29.01 dBFS` vs `-29.83 dBFS`・`diffDb -0.82 dB`、`manifest.json` 99文字、手動 13項目の Chromium スクリーンショット目視・Web Audio/Canvas 計測値）および備考が記入されており、`未実施` 行や空欄はない。
+- **C4/C5/C6 不具合・判定・日本語品質・表ルール**: 第6.1節が `docs/artifacts/BUG101_バグ管理表.md`（未解決 Open バグ 0件、既存 B001 解決済）と整合し、第6.2節に `**判定: Pass**` と根拠が明記されている。`表3`・`表4` のタイトルが表直上に配置され本文から番号参照されていること、および `style_check.py lint`/`verify`・`asdoq_lint.py` 合格を確認した。
+
+### ステップ3：指摘件数と総合判定
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0。残 Open High 0件 / Open Mid 0件）
+- **総合判定**: **REVIEW: APPROVED**（根拠: `dada_check.py report` 終了コード 0、`dada_check.py all` 終了コード 0、`asdoq_lint.py --profile swp6` High=0 / Mid=0、`style_check.py lint` Mid=0 / 要確認=0、`style_check.py verify` High=0 / 要確認=0、全 75項目（自動 62件・手動 13件）Pass・具体的証跡記載、および `BUG101` 未解決 0件を確認済み）
+
+---
+
+## v4.3.1 Phase 2 総合テスト仕様書（計画：1〜4章）レビュー記録（2026-11-21）
+
+- **レビュー種別**: Phase 2 計画レビュー（Section A：Minor 改訂第1〜4章および第5〜6章の未実施リセット確認）
+- **レビュー担当**: `test-reviewer` + `asdoq-reviewer`（自己校正・第1周〜第2周）
+- **対象ファイル**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v4.3.1、L1〜203）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v4.3.1）、継承対象 `docs/artifacts/SW205_ソフトウェアアーキテクチャ設計書.md`（v4.3、Minor スケールにより Phase 3 省略・変更なし）
+- **適用プロファイルと選択した品質特性**: `swp6` プロファイルに基づき、`C2_maintainability`（保守性）、`C3_consistency`（整合性）、`C4_understandability`（理解容易性）、`C5_readability`（可読性）の 4特性を選択（理由: `asdoq_lint.py` 推奨 3特性に加え、`JP-Humanizer` 8観点評価対象である `C5` を検証するため。`--decision1` は既定の `off`）。
+- **思考過程**:
+  - **①現在地**: `SW105` v4.3.1 の Minor 改訂承認および自律型事前委譲を受け、差分改訂した `SWP6` v4.3.1（第1〜4章の計画および第5〜6章の未実施リセット状態）を `test-reviewer` 兼 `asdoq-reviewer` として反証駆動レビューする。
+  - **②判断の根拠**: `dada_check.py all`・`asdoq_lint.py --profile swp6`・`style_check.py lint`・`style_check.py verify` の実測結果と `SW105` v4.3.1 および継承対象 `SW205` v4.3 との突合に基づき、網羅性・数値境界・設計詳細の非先回り・ASDoQ 4重点特性を検証する。
+  - **③次の一手**: 第1周で検出した長文・受動態連続・指示語等を `R009`〜`R011` として記録し、第2周修正・再検証後にすべて `Closed` として `REVIEW: APPROVED` を確定する。
+
+### ステップ1：機械チェック・構造クロスリファレンス要約（第1周 → 第2周修正後）
+- `python tools/dada_check.py all`:
+  - 第1周（修正前）: 終了コード `0`（`DADA-CHECK: OK | High 0 / Mid 0 / 要確認 1 | 対象: SW105, SW205, SWP6`）。ただし第3.3節（L54）に規範的記述外の指示語「これら」を含む行が 1行検出された。
+  - 第2周（修正後）: 終了コード `0`（`DADA-CHECK: OK | High 0 / Mid 0 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし。規範的記述内外ともに曖昧語・指示語は 0行、`要確認 1` は L155 `（0件）` 表記の形式検出のみでスケルトン残骸なし。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6`:
+  - 第1周（修正前）: 終了コード `0`（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=1 / 要確認=19 | DECISION1_MODE=off`）。`TC-075`（L152）に `RULE-302`（1文内での受動態連続）が `Mid` 1件、L51 に `RULE-206`、L171 に `RULE-406` が検出された（`R010`・`R011` として記録）。
+  - 第2周（修正後）: 終了コード `0`（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=17 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）。`要確認 17` の内訳は L115（`TC-038`）の並列記載に対する `RULE-206`（誤検知）1件、複合名詞末尾「時」（「起動時」「再生時」「変更時」等）に対する `RULE-504`（誤検知）14件、および L198・L202 既版改版履歴に対する `RULE-503`（誤検知）2件であり、実欠陥なし。構造クロスリファレンスでは `1文以下の希薄見出し節: []`・`類似表記ゆれペア: []`・`未定義の図参照: []`・`未定義の表参照: []`・`Mermaid 10ノード上限超過: []`・`図表キャプション位置違反: []` を確認した。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`:
+  - 第1周（修正前）: 終了コード `1`（`STYLE-LINT: WARN | Mid=2 / 要確認=0`。L26 115文字、L54 139文字の 110文字上限超過を `R009` として記録）。
+  - 第2周（修正後）: 終了コード `0`（`STYLE-LINT: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | Mid=0 / 要確認=0`）。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`:
+  - 第2周（修正後）: 終了コード `0`（`STYLE-VERIFY: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | High=0 / 要確認=0`）。
+
+### ステップ2〜3：品質特性別評価サマリと根拠引用（第2周再検証後）
+- **C2 保守性（合格）**: 第1.2〜1.3節（L14〜18）および第2.2節 表1（L26〜44）で、Minor 改訂により `SW205`（版数 4.3）を継承する一方、具体的なウィンドウ外寸数値や実装ツール詳細を先取りせず、設計依存の計測・模擬手段 10項目すべてに `TBD（Phase 3 の SW205 で確定する）`（L33〜42）を維持している。第4章末尾「網羅性の確認」（L154〜162）で `REQ-001`〜`REQ-007` に対する `TC-001`〜`TC-075`（75件：自動 62件・手動 13件、`TC-075` の `REQ-001・REQ-003・REQ-006・REQ-007` 共用含む）の追跡範囲を確認した。
+- **C3 整合性（合格）**: `SW105` v4.3.1 の 2大改訂点および Minor 継承要件と矛盾なく整合している。
+  1. **実ビューポート幅 640px 以上・全画面非重複・見切れゼロ・スクロールバーなし**: 第1.3節（L18）、第2.1節（L23）、第3.2〜3.3節（L51, L54, L57〜68）、`TC-001`（L78）、`TC-004`〜`TC-009`（L81〜86）、`TC-012`（L89）、`TC-020`〜`TC-021`（L97〜98）、`TC-043`〜`TC-044`（L120〜121）、`TC-050`（L127）、`TC-054`（L131）、`TC-056`（L133）、`TC-075`（L152）へ Windows 11 上の Chrome ポップアップウィンドウ実表示領域における実ビューポート幅 `640px` 以上（`640px` 合格と `639px` 不合格の境界含む）と非重複・見切れゼロ・水平/垂直スクロールバーなしを反映した。
+  2. **元気な男性声「ジュワッチ」定量基準・境界値・SW205 継承整合**: 第2.1節（L23）、第2.2節（L39, L44）、第3.2〜3.3節（L51, L54, L63〜64）、`TC-033`（L110）、`TC-035`（L112）、`TC-040`〜`TC-041`（L117〜118）、`TC-065`（L142）、`TC-071`〜`TC-072`（L148〜149）に、非圧縮 PCM WAV（`24000Hz 以上・16bit・モノラル`）・総発音時間 `0.80秒〜1.20秒`・全体ピーク `0.85〜0.99`（非クリッピング）・全区間 RMS `0.18 以上`（`-14.9 dBFS 以上`）・F0 中央値 `135〜180 Hz`（女性声域 `220 Hz 以上` 不使用）・後半 35% 有音部ピーク比 `0.45〜0.85`（v4.2 過剰強調再導入なし）・後半 `3kHz〜8kHz` 高域帯域 RMS `<=` 前半全帯域 RMS の上下限境界・境界外側サンプルを反映した。あわせて `TC-035`・`TC-065` では `SW205`（版数 4.3 継承）と配布文書 3箇所（新 SHA-256・元気な男性声定量仕様・クレジット「`VOICEVOX:四国めたん`」維持・実ビューポート幅 640px 以上仕様）の確認対象を正確に切り分けた。
+  3. **計画状態・リセット・表ルール**: ヘッダ（L5〜7）は `版数: 4.3.1`・`最終更新日: 2026-11-21`・`承認状態: 計画承認済（自律型事前委譲、2026-11-21、Product Owner マサ）`、第5〜6章（L166〜184）は Phase 4 用未実施リセット（表3 1行 `未実施`、L183 `**判定: 未実施**`）、表4（L203）に版数 `4.3.1` が追記され、表1〜表4（L28, L75, L173, L189）のタイトルは表直上に配置されている。
+- **C4 理解容易性（第1周 `R009`・`R011` 修正後・合格）**: 曖昧語・指示語は 0行（`dada_check.py lint` 0件、`asdoq_lint.py` `High=0 / Mid=0`）。`TC-001`〜`TC-075` すべての期待出力が数値・文字列・件数で一意に判定可能であり、第3.3節（L54）で Product Owner マサによる公開前聴感・外観・法務確認を Phase 5 検収として分離している。
+- **C5 可読性（第1周 `R009`・`R010` 修正後・合格）**: 修正後の `style_check.py lint` は `Mid=0 / 要確認=0`、`style_check.py verify` は `High=0 / 要確認=0`、`asdoq_lint.py` の `RULE-302`・`RULE-406` も解消し、簡潔な常体と明確な行為主体で記述されている。
+
+### 指摘一覧（v4.3.1 Phase 2）
+以下の表5に Phase 2（v4.3.1）の自己校正レビュー指摘と第2周での修正結果を記録する。
+
+**表5：Phase 2（v4.3.1）レビュー指摘記録**
+| 指摘ID | 発生日 | 重要度 | 対象ドキュメント・箇所 | 指摘内容 | 修正提案 | 対応結果・修正内容 | ステータス |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| R009 | 2026-11-21 | Mid | SWP6 / 第2.2節（L26）、第3.3節（L54） | `[ASDoQ:理解容易性-非曖昧性（一意性）]` `[ASDoQ:可読性-簡潔性]` `style_check.py lint` で L26 が 115文字、L54 が 139文字（上限 110文字超過）として検出された。あわせて L54 に指示語「これら」が含まれている。❌ Before: L26 `設計に依存する計測手段およびテストフレームワークは Phase 3 の SW205 で確定する枠組みとし、Minor 改訂では既存の SW205（版数 4.3）の枠組みを継承して具体的なウィンドウ外寸数値やツール詳細を先取りしない。` / L54 `Product Owner（マサ）が公開前に確認する項目は、曲調や音量バランスの聴感適否、元気な男性声ジュワッチ音声の聴感適否（手元 VOICEVOX 男性話者 .wav 差し替え判断を含む）、実ビューポート幅 640px 以上の日英表記外観、および著作権・商標の最終判断である。これらは Phase 5 の検収および公開前引き継ぎ事項であるため、SWP6 の合否判定対象には含めない。` | ✅ After: L26 を「確定枠組み」と「Minor 継承・詳細非先取り」の 2文へ分割する。L54 は確認項目を 2文へ整理し、指示語「これら」を削って主語を具体化する。 | L26 および L54 を各 110文字以内の 2文へ分割し、L54 から「これら」を削除した。第2周の `style_check.py lint` で `Mid=0 / 要確認=0`、`dada_check.py` で指示語 0行を確認した。 | Closed |
+| R010 | 2026-11-21 | Mid | SWP6 / 第4章 `TC-075`（L152） | `[ASDoQ:可読性-表現適切性]` `RULE-302`: 期待される出力の末尾文で受動態「〜と判定され、〜と判定される」が連続し、`asdoq_lint.py` で Mid として検出された。❌ Before: `境界値検査では、実ビューポート幅 640px が合格・639px が不合格と判定され、description 132文字が合格・133文字が不合格と判定される` | ✅ After: `境界値検査では、判定ロジックが実ビューポート幅 640px と description 132文字を合格と判定し、実ビューポート幅 639px と description 133文字を不合格として検出する` | `TC-075`（L152）を能動態へ書き換え、第2周の `asdoq_lint.py --profile swp6` で `High=0 / Mid=0` を確認した。 | Closed |
+| R011 | 2026-11-21 | Low | SWP6 / 第3.2節（L51）、第5.2節（L171） | `[ASDoQ:理解容易性-非曖昧性（識別性）]` `[ASDoQ:可読性-簡潔性]` L51 の並列記載が `RULE-206`（修飾範囲の要確認）、L171 の「を実施し」が `RULE-406`（機能動詞結合の要確認）として検出された。❌ Before: L51 `description 132文字以内（132文字と 133文字の境界）と禁止名称・禁止表現の非混入を確認する。` / L171 `第4章の全 75件（自動 62件・手動 13件）を実施し` | ✅ After: L51 `description 132文字以内（132文字合格と 133文字不合格の境界）、禁止名称、および禁止表現の非混入を確認する。` / L171 `第4章の全 75件（自動 62件・手動 13件）を実行し` | L51 と L171 を修正案のとおり更新し、第2周の `asdoq_lint.py --profile swp6` で当該 2件の解消を確認した。 | Closed |
+
+### ステップ4：指摘件数と総合判定（第2周完了後）
+- **指摘件数**: 累計 3件（High: 0 / Mid: 2 / Low: 1）、残 Open: 0件（Open High: 0件 / Open Mid: 0件 / Open Low: 0件）
+- **総合判定**: **REVIEW: APPROVED**（根拠: 残 Open 0件、`dada_check.py all` 終了コード 0、`asdoq_lint.py --profile swp6` High=0 / Mid=0、`style_check.py lint` Mid=0 / 要確認=0、`style_check.py verify` High=0 / 要確認=0、全 `REQ-001`〜`REQ-007`（75件：自動 62件・手動 13件）網羅、承認状態 `計画承認済（自律型事前委譲、2026-11-21、Product Owner マサ）` および第5〜6章の未実施リセット確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## v4.3.1 Phase 4 総合テスト報告書レビュー記録（2026-11-21）
+
+- **レビュー種別**: Phase 4 完了後レビュー（Section B：テスト実施結果・報告書レビュー）
+- **レビュー担当**: `test-reviewer` + `asdoq-reviewer`
+- **対象文書**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（版数 4.3.1、第5〜6章報告書締結版、L1〜286）
+- **適用プロファイルと選択した品質特性**: `swp6` プロファイルに基づき、`C2_maintainability`（保守性）、`C3_consistency`（整合性）、`C4_understandability`（理解容易性）、`C5_readability`（可読性）の 4特性を適用した（`--decision1` は既定の `off`）。
+- **思考過程**:
+  - **①現在地**: v4.3.1 Phase 4 の単体・システム自動・手動実観測テスト完了を受け、締結版 `SWP6`（承認状態および第5〜6章・表3・表4）を `test-reviewer` として客観性・網羅性・ASDoQ 品質基準で検証する。
+  - **②判断の根拠**: `dada_check.py report`・`dada_check.py all`・`asdoq_lint.py --profile swp6`・`style_check.py lint`・`style_check.py verify` の実行結果、ならびに表3 全 75件の実測値と手動 13項目の実ブラウザ観測証跡（JSON・PNG 10画像目視）の突合に基づき判定する。
+  - **③次の一手**: High/Mid 指摘 0件および Open 課題 0件を確認したため、`REVIEW: APPROVED` を記録して Phase 4 を完了させる。
+
+### ステップ1：機械チェックの実行
+- `python tools/dada_check.py report --summary`: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`（終了コード 0）
+- `python tools/dada_check.py all --summary`: `DADA-CHECK: OK | High 0 / Mid 0 / 要確認 1 | 対象: SW105, SW205, SWP6`（終了コード 0、`UNIT↔コード 11/11`、`自動TC↔テストコード 62/62`、要確認 1件は表中の `（0件）` 表記に対する形式検出）
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6`: `ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=16 | DECISION1_MODE=off`（第5〜6章での High/Mid/要確認追加は 0件、構造クロスリファレンスで `未定義の図参照: []`・`未定義の表参照: []`・`図表キャプション位置違反: []` を確認）
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-LINT: OK | Mid=0 / 要確認=0`（終了コード 0）
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: `STYLE-VERIFY: OK | High=0 / 要確認=0`（終了コード 0）
+
+### ステップ2：報告内容とASDoQ重点特性の評価（第1周・根拠引用）
+- **C2 保守性・C3 整合性（合格）**:
+  - `SWP6` L7 で `承認状態: 報告書承認済（自律型事前委譲、2026-11-21、Product Owner マサ）` へ更新されている。
+  - `5.1 実行環境の記録`（L167〜177）に、実行日（`2026-11-21`）、実行 OS（`Windows 11 Home / win32 / 10.0.26300`）、テスト環境（`Chromium 158.0.8127.18`・`Playwright 1.65.0`・`Node.js v22.23.4`・`Python 3.15.1`）、対象版数（`ColorBeaconTimer 4.3.1`・`SW205` 版数 `4.3` 継承）、全集計（`75件 Pass / Fail 0 / Skipped 0`、単体 `63件` 全 Pass、Playwright `8テスト` 全 Pass・`5.4分`）、実ポップアップ実測値（外寸 `700×720px`・実ビューポート `686×683px`）、`juwacchi.wav` 実測指標、および BGM 音量バランス実測値が一致して記録されている。
+  - `5.2 結果詳細` `表3`（L182〜259）に `TC-001`〜`TC-075` 全 75件（自動 62件・手動 13件）すべてが `Pass` かつ具体的証跡付きで記録され、`未実施` 行や空欄は存在しない。手動 13項目（`TC-005, 007, 012, 024, 025, 028, 033, 040, 044, 045, 050, 054, 064`）についても実ポップアップ画像 10枚の目視確認および `manual_observe_report.json` の実測数値（`686×683px`、`68009ms`、`59992ms`、`109周期/109回 unlit 発火`、`992.8ms`、`F0 156.9Hz`、`RMS 0.2277 / -12.85 dBFS`、`diffDb -0.82 dB`、4象限画素数等）と整合している。
+  - `6.1`〜`6.2`（L261〜267）が `docs/artifacts/BUG101_バグ管理表.md`（未解決 Open バグ 0件、既存 `B001` 解決済）と整合し、`**判定: Pass**` と根拠を明記している。`表4`（L286）に Phase 4 完了記録も反映された。
+- **C4 理解容易性・C5 可読性（合格）**: 初稿 `asdoq_lint.py` で検出された `TC-041` の部分一致（「以上記載」内の「上記」`RULE-108`）を即時に修正し、`High=0 / Mid=0` と `style_check.py lint`（`Mid=0`）・`verify`（`High=0`）をすべて達成した。`表3`・`表4` ともタイトルが表直上に置かれ本文から参照されている。
+
+### ステップ3：指摘件数と総合判定
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0。残 Open High 0件 / Open Mid 0件）
+- **総合判定**: **REVIEW: APPROVED**（根拠: `dada_check.py report` 終了コード 0、`dada_check.py all` 終了コード 0、`asdoq_lint.py --profile swp6` High=0 / Mid=0、`style_check.py lint` Mid=0 / 要確認=0、`style_check.py verify` High=0 / 要確認=0、全 75項目（自動 62件・手動 13件）Pass・具体的実測証跡記載、`BUG101` 未解決 0件、および総合判定 `**判定: Pass**` を確認済み）
+
+---
+
+## v4.4 Phase 2 総合テスト仕様書（計画：1〜4章）レビュー記録（2026-11-22）
+
+- **レビュー種別**: Phase 2 計画レビュー（Section A：Major 改訂第1〜4章および第5〜6章の未実施リセット確認）
+- **レビュー担当**: `test-reviewer` + `asdoq-reviewer`（自己校正・第1周〜第2周）
+- **対象ファイル**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v4.4、L1〜209）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v4.4）
+- **適用プロファイルと選択した品質特性**: `swp6` プロファイルに基づき、`C2_maintainability`（保守性）、`C3_consistency`（整合性）、`C4_understandability`（理解容易性）、`C5_readability`（可読性）の 4特性を選択（理由: `asdoq_lint.py` 推奨 3特性 `C2_maintainability, C3_consistency, C4_understandability` に加え、`JP-Humanizer` 8観点評価対象である `C5_readability` を検証するため。`--decision1` は既定の `off`）。
+- **思考過程**:
+  - **①現在地**: `SW105` v4.4 の Phase 1 承認および自律型事前委譲を受け、Major 改訂した `SWP6` v4.4（第1〜4章の計画および第5〜6章の未実施リセット状態）を `test-reviewer` 兼 `asdoq-reviewer` として反証駆動レビューする。
+  - **②判断の根拠**: `dada_check.py all`・`asdoq_lint.py --profile swp6`・`style_check.py lint`・`style_check.py verify` の実測結果と `SW105` v4.4 との全件突合に基づき、REQ 網羅性・境界値・Phase 3 `SW205` 非先回り・旧表記排除・ASDoQ 4重点特性を検証する。
+  - **③次の一手**: 第1周で検出した `TC-077` 違反サンプル期待出力の網羅不足および `TC-076` 用語統一を `R012`・`R013` として記録し、第2周修正・再検証後にすべて `Closed` として `REVIEW: APPROVED` を確定する。
+
+### ステップ1：機械チェック・構造クロスリファレンス要約（第1周 → 第2周最終修正後）
+- `python tools/dada_check.py all --summary`:
+  - 終了コード `0`（`DADA-CHECK: 要対応（Mid指摘あり） | High 0 / Mid 2 / 要確認 1 | 対象: SW105, SW205, SWP6`）。`REQ↔TC` は `7/7` で漏れなし、`REQ↔UNIT` は `7/7`。`Mid 2` は Phase 2 で新規追加した自動テスト `TC-076`・`TC-077` に対応するテストコードが Phase 4 実施前のため未実装であることに起因し、Phase 4 で実装・解消予定。`SWP6` 文書自体の High/Mid 指摘は 0件、`要確認 1` は表中の `（0件）` 表記に対する形式検出のみでスケルトン残骸なし。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6`:
+  - 終了コード `0`（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=11 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）。`C1=100.0`, `C2=100.0`, `C3=100.0`, `C4=100.0`, `C6=100.0`。`要確認 11` の内訳は複合名詞末尾「時」（「起動時」「再生時」「変更時」等）に対する `RULE-504`（誤検知）9件および L203・L207 既版改版履歴（v3.2・v4.3）の「更に」に対する `RULE-503`（誤検知）2件であり、実欠陥なし。構造クロスリファレンスでは `1文以下の希薄見出し節: []`・`類似表記ゆれペア: []`・`未定義の図参照: []`・`未定義の表参照: []`・`Mermaid 10ノード上限超過: []`・`図表キャプション位置違反: []` を確認した。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`:
+  - 終了コード `0`（`STYLE-LINT: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | Mid=0 / 要確認=0`）。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`:
+  - 終了コード `0`（`STYLE-VERIFY: OK | file=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | High=0 / 要確認=0`）。
+
+### ステップ2〜3：品質特性別評価サマリと根拠引用（第2周再検証後）
+- **C2 保守性（合格）**:
+  - 第1.2〜1.3節（L15〜20）および第2.2節 表1（L27〜48）で、Major 改訂により Phase 3 で `SW205`（版数 4.4）を新規改訂・確定する方針を明示し、ウィンドウ外寸定数・終了演出レイアウト・`EXIT` ボタン終了制御方式・選定話者細部・計算ツール具体名を先取りせず、設計依存の計測・観測・模擬・検証手段 13項目すべてに `TBD（Phase 3 の SW205 で確定する）`（L35〜47）を明記している。
+  - 第4章末尾「網羅性の確認」（L160〜168）に `REQ-001`〜`REQ-007` ごとの `TC-001`〜`TC-077`（合計 77件：自動 64件・手動 13件、`TC-075`・`TC-076` の共用内訳含む）の追跡範囲が示され、要求変更時の影響特定が可能である。
+- **C3 整合性（合格）**:
+  - **単一の元気な成人男性話者による「ジュワッチ」一括音声合成（`REQ-005`・`REQ-006`）**: 第2.1節（L25）、第3.2〜3.3節（L55, L58, L67〜68）、`TC-033`（L114）、`TC-035`（L116）、`TC-040`〜`TC-041`（L121〜122）、`TC-065`（L146）、`TC-071`〜`TC-072`（L152〜153）が `SW105` v4.4 の定量・方針要件（PCM WAV `24000Hz 以上・16bit・1ch`、総長 `0.80〜1.20秒`、全体ピーク `0.85〜0.99`、全区間 RMS `0.18 以上`、全体 F0 中央値 `110〜180 Hz`、前半 65%・後半 35% 各区間の有声 F0 中央値 `85〜200 Hz`・声質断絶なし、後半 35% ピーク比 `0.25〜0.85`、後半 `3〜8kHz` 帯域 RMS `<=` 前半全帯域 RMS、境界値および境界外側サンプル）と一致し、旧 v4.3.1 記述（`VOICEVOX:四国めたん`、`TD-PSOLA`、`フォルマント合成結合`、`SW205 v4.3 継承` 等）が撤廃されている。
+  - **`EXIT` ボタン追加（`REQ-007` 等）**: 第2.1節（L25）、第3.2〜3.3節（L55, L58, L69〜70）、`TC-004`〜`TC-008`（L85〜89）、`TC-010`（L91）、`TC-012`（L93）、`TC-020`〜`TC-021`（L101〜102）、`TC-043`〜`TC-046`（L124〜127）、`TC-050`（L131）、`TC-054`（L135）、`TC-056`（L137）、`TC-075`（L156）、および新設 `TC-076`（L157）において、終了演出画面（ドット飛散状態）のみでの可視表示・見切れと水平および垂直スクロールバー非発生・他画面非表示・押下終了・第1シーンからの再起動が一貫して反映されている。
+  - **DADAプロセス位置づけ・特徴2点・`README.md` 簡素化・旧教育用途禁止5語句排除（`REQ-006`）**: 第1.1節（L13）、第2.2節（L46, L48）、第3.2節（L55）、および新設 `TC-077`（L158）に「DADAプロセスを用いたプログラム開発例」（非教育用途）と 2つの特徴（開発文書の作成とレビュー、頻繁な要求改訂）、`README.md` の「開発状況」節非存在と「機能概要」節簡素化（`SW105` 誘導・クレジット維持）、および旧教育用途禁止5語句の非記載（本文 0件）が整合して反映されている。
+  - **計画状態・リセット・表ルール**: ヘッダ（L5〜7）は `版数: 4.4`・`最終更新日: 2026-11-22`・`承認状態: 計画承認済（自律型事前委譲、2026-11-22、Product Owner マサ）`、第5〜6章（L172〜189）は Phase 4 用未実施リセット（表3 1行 `TC-001〜TC-077` `未実施`、L189 `**判定: 未実施**`）、表4（L209）に版数 `4.4` が追記され、表1〜表4（L30, L79, L179, L194）のタイトルは表直上に配置され本文（L28, L77, L177, L192）から参照されている。
+- **C4 理解容易性（第1周 `R012`・`R013` 修正後・合格）**: 曖昧語・指示語は 0行（`dada_check.py lint` 0件、`asdoq_lint.py` `High=0 / Mid=0`）。`TC-001`〜`TC-077` すべての期待される出力が数値・文字列・件数で一意に判定でき、第3.3節（L58）で Product Owner マサによる公開前聴感・外観・配布文書・法務確認を Phase 5 検収として分離している。
+- **C5 可読性（合格）**: `style_check.py lint`（`Mid=0 / 要確認=0`）および `style_check.py verify`（`High=0 / 要確認=0`）の双方を合格し、長文・過剰装飾・AI-Slop 表現がなく簡潔な常体で記述されている。
+
+### ステップ4：指摘一覧（v4.4 Phase 2）と第2周再レビュー結果
+以下の表6に Phase 2（v4.4）の自己校正レビュー指摘と第2周での修正結果を記録する。
+
+**表6：Phase 2（v4.4）レビュー指摘記録**
+| 指摘ID | 発生日 | 重要度 | 対象ドキュメント・箇所 | 指摘内容 | 修正提案 | 対応結果・修正内容 | ステータス |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| R012 | 2026-11-22 | Mid | SWP6 / 第4章 `TC-077`（L158） | `[ASDoQ:理解容易性-非曖昧性（一意性）]` `[ASDoQ:整合性-無矛盾性]` 入力データ列に「`「開発状況」節残存サンプル・禁止5語句混入サンプル・詳細数値残存サンプル`」を挙げているが、期待される出力欄に「`## 開発状況`」節残存および「機能概要」節詳細数値残存の不合格検出が明記されていない。❌ Before: `違反サンプル入力では、欠落および禁止語句混入がいずれも不合格として検出される` | ✅ After: `違反サンプル入力では、位置づけ・特徴・SW105 参照の記載欠落、「## 開発状況」節残存、「機能概要」節の詳細数値残存、および禁止5語句混入がいずれも不合格として検出される` | `TC-077`（L158）の期待される出力を修正案のとおり更新し、`style_check.py verify`（`High=0 / 要確認=0`）および `asdoq_lint.py`（`High=0 / Mid=0`）で解消を確認した。 | Closed |
+| R013 | 2026-11-22 | Low | SWP6 / 第4章 `TC-076`（L157） | `[ASDoQ:整合性-一貫性]` 同一セル内で、表示時の `可視表示（1件）` に対し非表示側が `表示件数 0件` となっており、DOM 存在かつ不可視との対比表現が統一されていない。❌ Before: `EXITボタンが非表示または非存在（表示件数 0件）である。` | ✅ After: `EXITボタンが非表示または非存在（可視件数 0件）である。` | `TC-076`（L157）を `可視件数 0件` へ統一し、第2周再検証で整合性を確認した。 | Closed |
+
+- **指摘件数**: 累計 2件（High: 0 / Mid: 1 / Low: 1）、残 Open: 0件（Open High: 0件 / Open Mid: 0件 / Open Low: 0件）
+- **総合判定**: **REVIEW: APPROVED**（根拠: 残 Open High 0件・Open Mid 0件、`dada_check.py all` 終了コード 0、`asdoq_lint.py --profile swp6` High=0 / Mid=0、`style_check.py lint` Mid=0 / 要確認=0、`style_check.py verify` High=0 / 要確認=0、全 `REQ-001`〜`REQ-007`（77件：自動 64件・手動 13件）網羅、承認状態 `計画承認済（自律型事前委譲、2026-11-22、Product Owner マサ）` および第5〜6章の未実施リセット確認済み、曖昧要求による Phase 1 差し戻し事項なし）
+
+---
+
+## v4.4 Phase 4 総合テスト報告書レビュー記録（2026-11-22）
+
+- **レビュー日**: 2026-11-22
+- **対象範囲**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（版数 `4.4`、第5〜6章・承認状態・表4改版履歴）、`docs/artifacts/BUG101_バグ管理表.md`
+- **参照基準**: `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v4.4）、`docs/artifacts/SW205_ソフトウェアアーキテクチャ設計書.md`（v4.4）、`docs/guidelines/asdoq_checklist.md`、`.agents/skills/test-reviewer/SKILL.md` 第B節、`.agents/skills/asdoq-reviewer/references/C2〜C5`
+- **思考過程**:
+  - **①現在地**: Major 改訂（v4.4）Phase 4 で作成された `SWP6` 報告書（第5〜6章）の網羅性・客観性・数値整合・文書品質を `test-reviewer` として検証する。
+  - **②判断の根拠**: `dada_check.py report`・`dada_check.py all`・`asdoq_lint.py --profile swp6`・`style_check.py lint`・`style_check.py verify` の全機械検証結果と、`TC-001`〜`TC-077` 全 77件の個別実施証跡・実測 SHA-256・`BUG101` 0件記録を突合した。
+  - **③次の一手**: 指摘 0件（残 Open 0件）および `REVIEW: APPROVED` を記録し、全最終コマンドの終了コード 0 を再確認する。
+
+### ステップ1：機械チェック・構造クロスリファレンス要約
+- `python tools/dada_check.py report`:
+  - 終了コード `0`（`DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`）。全 `TC-001`〜`TC-077`（`77/77 件`）が `Pass` 記入済みであり、`BUG101` の未解決バグ 0件および 6.2節 `**判定: Pass**` を確認した。
+- `python tools/dada_check.py all`:
+  - 終了コード `0`（`DADA-CHECK: OK | High 0 / Mid 0 / 要確認 1`、`REQ↔TC 7/7`、`REQ↔UNIT 7/7`、`UNIT↔コード 11/11`、`自動TC↔テストコード 64/64`、未解決帳票行 0件）。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6`:
+  - 終了コード `0`（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=11 | DECISION1_MODE=off`）。第5〜6章および改版履歴 v4.4 行における警告は 0件である（`C1=100.0`, `C2=100.0`, `C3=100.0`, `C4=100.0`, `C6=100.0`）。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`:
+  - 終了コード `0`（`STYLE-LINT: OK | Mid=0 / 要確認=0`）。110文字超の長文および過剰読点は 0件である。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`:
+  - 終了コード `0`（`STYLE-VERIFY: OK | High=0 / 要確認=0`）。推敲前後で全 ID・数値・単位・表構造・否定極性が完全に一致している。
+
+### ステップ2〜3：実施結果の客観性・ASDoQ品質特性（C2〜C5）・JP-Humanizer 検証
+- **網羅性と客観的証跡（C2 保守性 / C4 理解容易性・合格）**:
+  - `SWP6` ヘッダ（L7）が `承認状態: 報告書承認済（自律型事前委譲、2026-11-22、Product Owner マサ）` へ更新されている。
+  - 第5.1節（L173〜194）に実行日時（`2026-11-22T16:43〜16:55 JST`）、OS・Node.js・Playwright Chromium 版番号（`158.0.8127.18`、`viewport: null`）、対象版数（`ColorBeaconTimer 4.4.0`）、単体（68項目 Pass）・システム自動（9テスト・64件網羅 Pass・6.4分）・手動観測（13件 Pass）の集計、実ビューポート実測値（`686×683px`）、ならびに `juwacchi.wav` 全定量実測値（`24000Hz / 16bit / 1ch`・`1.000秒`・`48,044 bytes`・ピーク `0.9400`・RMS `0.1908`・全体 F0 `131.88 Hz`・前半 F0 `142.43 Hz`・後半 F0 `109.09 Hz`・後半 35% ピーク比 `0.6981`・高域帯域比 `0.1807`・SHA-256 `2cc9fa63...`）が記録されている。
+  - 第5.2節 表3（L199〜277）に `TC-001`〜`TC-077` の全 77件が個別行で記録され、自動 64件は実行ファイル・行番号（`tests/system/auto.spec.js:316, 463, 742, 953, 1026, 1158, 1187, 1258, 1403`、`tests/unit/*.test.js`）、手動 13件は実ブラウザ観測（`manual_observe_v44.mjs`）・スクリーンショット `read_file` 視認（`obs_scene1〜4.png`, `obs_setting.png`, `obs_countdown_*.png`, `obs_ending_*.png`）・音声 `read_file` 直接聴取の結果が明記されている。
+- **整合性と図表規範（C3 整合性・合格）**:
+  - 第6.1節（L279〜281）および `docs/artifacts/BUG101_バグ管理表.md` の双方が新規バグ 0件・未解決 `Open` バグ 0件（既存 `B001` 解決済）で一致している。開発中 `renderer.js` 修正の経緯および再テスト全件合格の事実も虚飾なく記録されている。
+  - 表3（L197〜198）および表4（L290〜291）のタイトルはいずれも表直上に配置され、本文（L196, L289）から参照されている。第6.2節（L283〜286）は全 77件合格・未解決バグ 0件に基づき `**判定: Pass**` を明記している。
+- **可読性（C5 可読性 / JP-Humanizer・合格）**:
+  - 第5〜6章はすべて主語・対象が明快な常体かつ 110文字以内の短文で構成され、AI-Slop や不自然な機能動詞・重複格助詞を含まない（`style_check.py lint` `Mid=0`、`asdoq_lint.py` `C6=100.0`）。
+
+### ステップ4：指摘一覧（v4.4 Phase 4）
+- 指摘なし（新規指摘 0件、残 Open 0件）。
+- **指摘件数**: 0 件（High: 0 / Mid: 0 / Low: 0）、残 Open: 0件（Open High: 0件 / Open Mid: 0件 / Open Low: 0件）
+- **総合判定**: **REVIEW: APPROVED**（根拠: 残 Open High 0件・Open Mid 0件、`dada_check.py report` および `dada_check.py all` 終了コード 0、`asdoq_lint.py --profile swp6` 第5〜6章および v4.4 行の High=0 / Mid=0、`style_check.py lint` Mid=0 / 要確認=0、`style_check.py verify` High=0 / 要確認=0、全 `TC-001`〜`TC-077`［自動 64件・手動 13件］の客観的証跡記録、ならびに `BUG101` Open バグ 0件と `**判定: Pass**` との完全整合を確認済み）
+
+
+---
+
+## v4.5 Phase 2 総合テスト仕様書（計画：1〜4章）レビュー記録（2026-11-25）
+
+- **レビュー種別**: Phase 2 計画レビュー（Section A：Major 改訂第1〜4章および第5〜6章の未実施リセット確認）
+- **レビュー担当**: `test-reviewer` + `asdoq-reviewer`（自己校正・第1周）
+- **対象ファイル**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（v4.5、L1〜212）
+- **入力**: 承認済み `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v4.5）
+- **適用プロファイルと選択した品質特性**: `swp6` プロファイルに基づき、`C2_maintainability`（保守性）、`C3_consistency`（整合性）、`C4_understandability`（理解容易性）、`C5_readability`（可読性）の 4特性を選択（理由: `asdoq_lint.py` 推奨特性に加え、`JP-Humanizer` 8観点評価対象である `C5_readability` を検証するため。`--decision1` は既定の `off`）。
+- **思考過程**:
+  - **①現在地**: `SW105` v4.5 の Phase 1 承認（承認ゲート型・Major）を受け、改訂された `SWP6` v4.5（第1〜4章の計画および第5〜6章の未実施リセット状態）を独立した `test-reviewer` として反証駆動レビューする。
+  - **②判断の根拠**: 再利用した直前検証結果 `docs/process/check_report.md`（`dada_verify.py --phase 2 --profile swp6 --decision1 off`）、`style_check.py lint` / `verify` 実測結果、および `SW105` v4.5 との全件突合に基づき、要求網羅・設計非先回り・第5〜6章未実施リセット・旧楽曲名非残存・ASDoQ 4重点特性を検証した。
+  - **③次の一手**: 指摘 0件（残 Open 0件）を確認し、合格根拠を引用したうえで `REVIEW: APPROVED` を記録して完了を報告する。
+
+### ステップ1：機械チェック結果（再利用＋補足確認）
+- `docs/process/check_report.md`（直前 `dada_verify.py --phase 2 --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --decision1 off` 再利用）:
+  - 判定 **OK**（`High 0 / Mid 0 / 要確認 12`、`REQ↔TC 7/7`、`REQ↔UNIT 7/7`、未解決帳票 0件）。
+  - `asdoq_lint`（`profile=swp6`, `decision1=off`）の `要確認 12` は、表中の `（0件）` 形式検出（0件実残骸）、複合名詞末尾「時」（L48, 109, 123, 141, 142, 144, 145, 154, 160 の「実行時」「再生時」「遷移時」「終了時」等 `RULE-504` 9件）、および改版履歴既版行（L205, L209 の「更に」`RULE-503` 2件）のみであり、実欠陥はない。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: 終了コード `0`（`STYLE-LINT: OK | Mid=0 / 要確認=0`）。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`: 終了コード `0`（`STYLE-VERIFY: OK | High=0 / 要確認=0`）。
+- 旧楽曲名非残存確認（`Select-String` 全文走査）: 第1〜4章（L1〜169）および第5〜6章（L172〜192）に旧楽曲名・旧要素（「怪獣出現風」「オーケストラ」「ハミング」「ホルン」「トロンボーン」「ティンパニ」「弦楽」「kaiju」）の残存は 0件である（L206〜208, L212 は表4改版履歴の過去版記録および改訂経緯表記のみ）。
+
+### ステップ2〜3：反証検証とASDoQ重点特性の評価（根拠引用）
+- **C2 保守性（合格）**:
+  - **設計非先回り・TBD解消計画**: 第1.2〜1.3節（L17, L20）で `本文書では、SW205 へ委ねる具体的なウィンドウ外寸やレイアウト詳細を先取りしない。第3シーン楽曲の合成・再生ゲイン調整・シームレスループ実装方式、終了制御方式、音声生成話者の細部、および計算ツール具体名も Phase 3 の SW205 で確定する。` と明記し、第2.2節 表1（L35〜47）の設計依存 13項目（L39 `PCM WAV 音質・振幅・ループ境界ギャップの計測手段`、L40 `BGM 再生時実効音量（全区間 RMS 基準の dBFS）の比較計測手段` 等を含む）すべてに `TBD（Phase 3 の SW205 で確定する）` を維持している。
+  - **単一情報源・追跡性**: 表1 テストデータ（L48）は禁止名称リスト 8文字列と旧教育用途禁止5語句を `SW105` から直接参照する方針を明記し、第4章「網羅性の確認」（L160〜168）で `REQ-001`〜`REQ-007`（7/7件）に対する `TC-001`〜`TC-077`（合計 77件：自動 64件・手動 13件）の追跡範囲を網羅している。
+- **C3 整合性（合格）**:
+  - **`SW105` v4.5 との全件突合**:
+    1. 第3シーン BGM 改訂（`REQ-001`・`REQ-006`）: 第2.1節（L25）、第3.2節（L55）、第3.3節（L68, L73）、`TC-040`〜`TC-041`（L121〜122）、`TC-060`〜`TC-061`（L141〜142）、`TC-064`〜`TC-067`（L145〜148）、`TC-069`（L150）、`TC-073`（L154）が、`SW105` v4.5 の仕様（`オリジナル・宇宙冒険SF映画風シンセサイザー楽曲`、1970〜80年代レトロフューチャー寄りシンセウェーブ／電子音楽、4要素、非人声シンセサイザー合成 PCM WAV、MIT License、44.1kHz以上・16bit・ステレオ・最大正規化振幅 0.30〜0.95、無音ギャップ 0.05秒未満、接続点振幅差 0.05以下、第2シーン『ジムノペディ第1番』との実効音量差 ±3.0 dB 以内、非複製・非模倣）と数値・条件ともに一致している。
+    2. 連想ゲーム2の日英3行目追加（`REQ-001`）: `TC-008`（L89）および `TC-054`（L135）に、`SW105` L152・L156 と一字一句一致する文言（`・流れる曲は1970〜80年代レトロフューチャー風の宇宙冒険シンセサイザー音楽` / `• The music playing is 1970s–80s retro-futuristic space-adventure synthesizer music.`）が反映されている。
+    3. 継承要件（`REQ-001`〜`REQ-007`）: ジュワッチ音声（単一成人男性話者一括合成・定量境界）、EXITボタン排他的表示・終了制御、実ビューポート幅 640px 以上・日英常時併記・`manifest.json` 132/133文字境界、DADAプロセス位置づけと 2つの特徴・`README.md` 簡素化がすべて維持・網羅されている。
+  - **承認状態・第5〜6章未実施リセット・図表規範**: ヘッダ（L5〜7）は `版数: 4.5`・`最終更新日: 2026-11-25`・`承認状態: 計画承認待ち` であり、第5〜6章（L172〜191）は L174 `未実施`・L182 表3 `TC-001〜TC-077 | 未実施`・L186 `未実施`・L191 `**判定: 未実施**` へリセットされている。表1〜表4（L30, L79, L179, L196）のタイトルはいずれも表直上に配置され本文（L28, L77, L177, L194）から参照されている。
+- **C4 理解容易性（合格）**:
+  - 曖昧語・指示語は 0件（`check_report.md` 機械指摘 High/Mid 0件）。`TC-001`〜`TC-077` の期待される出力はすべて数値・文字列・件数で一意に判定でき（例: `TC-068` L149 の `44100Hz / 16bit / 2ch / 0.30 と 0.95 / 0.05` 合格対 `44099Hz / 8bit / 1ch / 0.29 と 0.96 / 0.06` 不合格）、第3.3節（L58）で Product Owner（マサ）による公開前の聴感・外観・配布文書・著作権商標判断を Phase 5 検収として明確に分離している。
+- **C5 可読性（合格）**:
+  - `style_check.py lint`（`Mid=0 / 要確認=0`）および `style_check.py verify`（`High=0 / 要確認=0`）に合格している。第1.1節（L11）、第3.2節（L55）、`TC-040`（L121）、`TC-064`（L145）など主語と動作対象が明快な常体で記述され、110字超長文・英語風ダッシュ繋ぎ・AI-Slop・不要な強調表現は含まれない。
+
+### ステップ4：指摘一覧と総合判定
+- **新規指摘**: なし（`High: 0 / Mid: 0 / Low: 0`、残 `Open`: `0件`）。
+- **総合判定**: **REVIEW: APPROVED**（根拠: 残 Open High 0件・Open Mid 0件、`check_report.md` 再利用検証 High 0 / Mid 0、`style_check.py lint` Mid 0 / `verify` High 0、`SW105` v4.5 全7件 REQ と `TC-001`〜`TC-077` 77件の完全突合、設計非先回り・表1 TBD 維持、第1〜4章の旧楽曲名非残存、ならびに第5〜6章の未実施リセット確認済み）
+
+---
+
+## v4.5 Phase 4 総合テスト報告書レビュー記録（2026-11-25）
+
+- **レビュー種別**: Phase 4 完了後レビュー（Section B：テスト実施結果・報告書レビュー）
+- **レビュー担当**: `test-reviewer` + `asdoq-reviewer`（独立レビュー）
+- **対象文書**: `docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md`（版数 `4.5`、第5〜6章・ヘッダ承認状態・表4改版履歴、L1〜7・L172〜302）
+- **照合正本**: `docs/artifacts/SW105_ソフトウェア要求仕様書.md`（v4.5 承認済）、`docs/artifacts/SW205_ソフトウェアアーキテクチャ設計書.md`（v4.5 承認済）、`docs/artifacts/BUG101_バグ管理表.md`、`docs/artifacts/REV101_Code.md`（v4.5 `REVIEW: APPROVED`）、`extension/src/audio/opening-bgm-player.js`、`extension/src/view/renderer.js`、`extension/assets/SOURCES.md`、`docs/process/check_report.md`
+- **適用プロファイルと選択した品質特性**: `swp6` プロファイルに基づき、`C2_maintainability`（保守性）、`C3_consistency`（整合性）、`C4_understandability`（理解容易性）、`C5_readability`（可読性）の 4特性を選択した（`--decision1` は既定の `off`）。
+- **思考過程**:
+  - **①現在地**: Major 改訂（v4.5・承認ゲート型）Phase 4 完了後の `SWP6` 総合テスト報告書（第5〜6章、承認状態 `報告書承認待ち`）を独立した `test-reviewer` として検証する。
+  - **②判断の根拠**: `dada_check.py report`・`dada_verify.py --phase 4 --profile swp6 --decision1 off`・`asdoq_lint.py --profile swp6 --decision1 off`・`style_check.py lint`・`style_check.py verify` の全実行結果、表2・表3 全 77件の 1対1 照合、および `SW205`・`REV101_Code`・`BUG101`・実装ファイルとの数値・証跡照合に基づき判定した。
+  - **③次の一手**: High 0件・Mid 0件および軽微な助詞抜け観察事項（Low 1件）を記録し、`REVIEW: APPROVED` として親エージェントへ報告する。
+
+### ステップ1：機械チェック・構造クロスリファレンス要約
+- `python tools/dada_check.py report --no-report --summary`: 終了コード `0`（`DADA-CHECK: OK | High 0 / Mid 0 / 要確認 0 | 対象: SW105, SW205, SWP6`）。
+- `python tools/dada_verify.py --phase 4 --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --decision1 off --summary`: 終了コード `0`（`DADA-VERIFY: WARN | scope=phase=4,input=docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md | High=0 / Mid=13 / 要確認=12 | cache=OFF | decision1=off`）。`docs/process/check_report.md` にて `Mid 13` は従来型プログラムでは適用外の `agent_def_check` 由来（`SW205` 12件・`SWP6` `EV-001` 1件）のみ、`要確認 12` は表中の `（0件）` 形式検出 1件・第1〜4章 `RULE-504`（`時`）9件・表4既版行 `RULE-503`（`更に`）2件のみであり、`asdoq_lint` 由来の High/Mid は 0件であることを確認した。
+- `python tools/asdoq_lint.py --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --profile swp6 --decision1 off --summary`: 終了コード `0`（`ASDOQ-LINT: OK | profile=swp6 | High=0 / Mid=0 / 要確認=11 | DECISION1_MODE=off (local_rule_fallback) | recommended=C2_maintainability,C3_consistency,C4_understandability`）。第5〜6章（L172〜302）由来の High/Mid/要確認は 0件である。
+- `python tools/style_check.py lint --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: 終了コード `0`（`STYLE-LINT: OK | Mid=0 / 要確認=0`）。
+- `python tools/style_check.py verify --input docs/artifacts/SWP6_ソフトウェア総合テスト仕様書・報告書.md --summary`: 終了コード `0`（`STYLE-VERIFY: OK | High=0 / 要確認=0`）。
+
+### ステップ2〜3：証跡・整合性・ASDoQ重点特性の評価（根拠引用）
+- **C2 保守性（合格）**:
+  - `SWP6` ヘッダ（L5〜7）は `版数: 4.5`、`最終更新日: 2026-11-25`、`承認状態: 報告書承認待ち（2026-11-25、Phase 4 実施完了・Product Owner 承認待ち）` であり、承認ゲート型として自己承認を行っていない。
+  - 第5.1節（L174〜188）に実行環境（Windows 11、Playwright Chromium `158.0.8127.18` `viewport: null`）、対象版数（`ColorBeaconTimer 4.5.0`）、テスト集計（`node:test` 68項目 Pass、Python 単体 12件 Pass、Playwright システム自動 9テストケース・6.8分 Pass、手動実観測 13件 Pass、合計 `77/77件 Pass`）、および再現可能な主要実測値が明記されている。
+- **C3 整合性（合格）**:
+  - 第4章 表2（自動 64件・手動 13件＝計 77件）と第5.2節 表3（L193〜272）の全 77件（`TC-001`〜`TC-077`）が ID・実行区分ともに 1対1 で一致し、未実施・空欄は 0件である。
+  - v4.5 数値・証跡の正本一致: 第5.1節（L187〜188）および `TC-067`/`TC-071`/`TC-073`（L262, L266, L268）の `space-adventure-synth.wav`（`44100Hz・16bit・2ch`、`16.000秒`、`2,822,444` バイト、SHA-256 `5e84a43d7becd93480bddf14919927da88daebadc69222ce6aecbfb644f4b93b`、最大振幅 `0.8500`、RMS `0.1969` / `-14.12 dBFS`、ループ境界ギャップ `0.0000秒`、接続点振幅差 `0.0034`、ゲイン `0.18`、再生時実効音量 `-29.01 dBFS`、第2シーンとの差 `-0.00 dB` / `-0.002 dB`）および `juwacchi.wav`（SHA-256 `2cc9fa63a0ab77ea1d926cb00f1204ed3c8b271bafc52acf9e0c513cce1d2d43` 等）が `extension/src/audio/opening-bgm-player.js`（L19 `scene3: 0.18`）、`extension/assets/SOURCES.md`（L12〜13）、および `REV101_Code.md`（L294〜295）と一致している。連想ゲーム2の日英 3行目も `TC-008`・`TC-054`（L203, L249）と `extension/src/view/renderer.js`（L52, L56）で一致している。
+  - 第6.1節（L276）の「新規不具合 0件、既存 `B001` 解決済、未解決 Open バグ 0件」が `BUG101_バグ管理表.md`（L9, L19）と一致し、第6.2節（L279〜281）で `**判定: Pass**` を宣言している。表3（L193）・表4（L286）のキャプションはいずれも表直上に配置され、本文（L191, L284）から参照されている。表4 改版履歴（L302）も版数 `4.5` の報告書締結・承認待ち状態と整合している。
+- **C4 理解容易性（合格）**:
+  - `TC-001`〜`TC-077` 全 77件が `Pass` 判定とともに具体的な実測値・観測根拠を伴っており、手動 13件（`TC-005, 007, 012, 024, 025, 028, 033, 040, 044, 045, 050, 054, 064`）にも各スクリーンショット（`scene1.png`〜`scene4.png`、`setting.png`、`countdown-blue.png`、`countdown-red-lit.png`、`countdown-red-unlit.png`、`ending-dots.png`、`ending-dots-10s.png`）、Web Audio スパイ、および `read_file` 直接聴取の客観的根拠が記載されている。
+- **C5 可読性（合格・軽微な観察事項 Low 1件）**:
+  - `style_check.py lint`（`Mid=0`）および `verify`（`High=0`）を満たし、第5〜6章全体は簡潔な常体で統一されている。ただし表3内の 2箇所で助詞「の」の脱落とみられる表記ゆれを軽微な観察事項（Low 1件、報告書合否・意味内容への影響なし）として記録する。
+    - `R014`（重要度: `Low`・次版整備時推奨観察事項 / 箇所: `SWP6` 表3 `TC-031` L226、`TC-061` L257）`[ASDoQ:可読性-表記適切性]`:
+      - ❌ Before: `再起動ときは第1シーンから開始した`（L226） / `第1/第4シーン到達ときは無音となった`（L257）
+      - ✅ After: `再起動のときは第1シーンから開始した`（または `再起動時は第1シーンから開始した`） / `第1/第4シーン到達のときは無音となった`（または `第1/第4シーン到達時は無音となった`）
+
+### ステップ4：指摘件数と総合判定
+- **指摘件数**: 1 件（High: 0 / Mid: 0 / Low: 1。`BUG101` 未解決 Open バグ 0件、残 Open High/Mid 0件）
+- **総合判定**: **REVIEW: APPROVED**（根拠: 残 Open High 0件・Open Mid 0件、`dada_check.py report` 終了コード 0、`dada_verify.py --phase 4 --profile swp6 --decision1 off` の `asdoq_lint` 由来 High/Mid 0件、`style_check.py lint`/`verify` 合格、`SWP6` ヘッダの `報告書承認待ち` 維持、第4章全 77件と第5.2節 表3 全 77件の客観的証跡一致、ならびに `SW205`・`REV101_Code`・`BUG101` との完全整合を確認済み）

@@ -7,5 +7,5 @@ alwaysApply: true
 
 - ルールの正本は `.agents/AGENTS.md`。作業の前に読み、このワークスペースの特別法として従う。
 - スキルの正本は `.agents/skills/` の各 `SKILL.md`。使う直前に読み、`.cursor/` や別の場所へ複製しない。
-- ソフトウェアの新規開発、機能追加、修正、バグ対応は `.agents/skills/dada-process/SKILL.md` を読んでから始める。Office 文書の編集だけ、日本語の推敲だけ、ASDoQ の文書レビューだけは、`.agents/AGENTS.md` 第2節に従い、DADA の全工程を起動しない。
+- ソフトウェアの新規開発、機能追加、修正、バグ対応は `.agents/skills/dada-process/SKILL.md` を読んでから始める。Office 文書の編集だけ、日本語の推敲だけ、ASDoQ の文書レビューだけは、`.agents/AGENTS.md` 第1節に従い、DADA の全工程を起動しない。
 - Antigravity App 固有の機能に当たったときの読み替え、Grok の推論の深さ、Cursor クラウドエージェントの役割分担は `docs/process/cursor_grok_setup.md` に従う。そのために `.agents/` は書き換えない。

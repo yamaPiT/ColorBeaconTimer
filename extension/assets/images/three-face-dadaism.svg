@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 220" width="260" height="220" role="img" aria-label="Original Black and White Geometric Three-Face Silhouette Illustration">
+  <defs>
+    <clipPath id="leftProfileClip">
+      <path d="M26 196 L26 138 L14 126 L22 108 L18 94 L28 74 L56 44 L86 44 L86 196 Z"/>
+    </clipPath>
+    <clipPath id="rightProfileClip">
+      <path d="M234 196 L234 138 L246 126 L238 108 L242 94 L232 74 L204 44 L174 44 L174 196 Z"/>
+    </clipPath>
+    <clipPath id="centerFaceClip">
+      <path d="M84 198 L74 142 L68 90 C68 42 96 20 130 20 C164 20 192 42 192 90 L186 142 L176 198 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- 背景の白黒幾何学フレーム -->
+  <rect x="4" y="4" width="252" height="212" rx="14" fill="#0b0d14" stroke="#f8fafc" stroke-width="3"/>
+  <rect x="12" y="12" width="236" height="196" rx="10" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="8 6"/>
+
+  <!-- 左側の横向きシルエット（幾何学ストライプ模様） -->
+  <g clip-path="url(#leftProfileClip)">
+    <rect x="10" y="40" width="84" height="160" fill="#f8fafc"/>
+    <polygon points="10,48 94,32 94,48 10,64" fill="#0b0d14"/>
+    <polygon points="10,76 94,60 94,76 10,92" fill="#0b0d14"/>
+    <polygon points="10,104 94,88 94,104 10,120" fill="#0b0d14"/>
+    <polygon points="10,132 94,116 94,132 10,148" fill="#0b0d14"/>
+    <polygon points="10,160 94,144 94,160 10,176" fill="#0b0d14"/>
+    <polygon points="10,188 94,172 94,188 10,204" fill="#0b0d14"/>
+  </g>
+  <path d="M26 196 L26 138 L14 126 L22 108 L18 94 L28 74 L56 44 L86 44 L86 196 Z" fill="none" stroke="#f8fafc" stroke-width="2.5"/>
+  <polygon points="36,92 52,86 48,100" fill="#f8fafc" stroke="#0b0d14" stroke-width="2"/>
+
+  <!-- 右側の横向きシルエット（反転斜線幾何学模様） -->
+  <g clip-path="url(#rightProfileClip)">
+    <rect x="166" y="40" width="84" height="160" fill="#f8fafc"/>
+    <polygon points="166,32 250,48 250,64 166,48" fill="#0b0d14"/>
+    <polygon points="166,60 250,76 250,92 166,76" fill="#0b0d14"/>
+    <polygon points="166,88 250,104 250,120 166,104" fill="#0b0d14"/>
+    <polygon points="166,116 250,132 250,148 166,132" fill="#0b0d14"/>
+    <polygon points="166,144 250,160 250,176 166,160" fill="#0b0d14"/>
+    <polygon points="166,172 250,188 250,204 166,188" fill="#0b0d14"/>
+  </g>
+  <path d="M234 196 L234 138 L246 126 L238 108 L242 94 L232 74 L204 44 L174 44 L174 196 Z" fill="none" stroke="#f8fafc" stroke-width="2.5"/>
+  <polygon points="224,92 208,86 212,100" fill="#f8fafc" stroke="#0b0d14" stroke-width="2"/>
+
+  <!-- 中央の正面シルエット（白黒幾何学ブロック分割） -->
+  <g clip-path="url(#centerFaceClip)">
+    <rect x="64" y="18" width="132" height="184" fill="#f8fafc"/>
+    <!-- 上部ボブ状幾何学バンド -->
+    <rect x="64" y="18" width="132" height="30" fill="#0b0d14"/>
+    <rect x="76" y="48" width="22" height="14" fill="#0b0d14"/>
+    <rect x="120" y="48" width="20" height="14" fill="#0b0d14"/>
+    <rect x="162" y="48" width="22" height="14" fill="#0b0d14"/>
+    <!-- 非対称ストライプ（ダダイズム風） -->
+    <rect x="64" y="68" width="52" height="14" fill="#0b0d14"/>
+    <rect x="144" y="68" width="52" height="14" fill="#0b0d14"/>
+    <rect x="64" y="96" width="38" height="16" fill="#0b0d14"/>
+    <rect x="158" y="96" width="38" height="16" fill="#0b0d14"/>
+    <polygon points="64,126 118,140 118,158 64,144" fill="#0b0d14"/>
+    <polygon points="196,126 142,140 142,158 196,144" fill="#0b0d14"/>
+    <rect x="108" y="168" width="44" height="14" fill="#0b0d14"/>
+    <rect x="64" y="186" width="132" height="16" fill="#0b0d14"/>
+  </g>
+  <path d="M84 198 L74 142 L68 90 C68 42 96 20 130 20 C164 20 192 42 192 90 L186 142 L176 198 Z" fill="none" stroke="#f8fafc" stroke-width="3"/>
+
+  <!-- 幾何学的な目・鼻・口のシンボル -->
+  <polygon points="88,92 114,88 106,102 90,100" fill="#f8fafc" stroke="#0b0d14" stroke-width="2.5"/>
+  <polygon points="172,92 146,88 154,102 170,100" fill="#f8fafc" stroke="#0b0d14" stroke-width="2.5"/>
+  <circle cx="101" cy="95" r="4" fill="#0b0d14"/>
+  <circle cx="159" cy="95" r="4" fill="#0b0d14"/>
+  <polygon points="130,96 123,128 137,128" fill="#0b0d14"/>
+  <rect x="112" y="144" width="36" height="8" rx="2" fill="#0b0d14"/>
+</svg>

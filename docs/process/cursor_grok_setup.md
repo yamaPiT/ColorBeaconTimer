@@ -1,6 +1,6 @@
 # Cursor と Grok で DADA キットを使う
 
-同梱の DADA キット（v6.1.0、取り込みコミット `ac2bf274`）は Google Antigravity App 向けです。工程、開発文書、`tools/` の点検スクリプトは、Cursor でも同じものを使います。このファイルは、Cursor（エディタとクラウドエージェント）とモデル Grok で動かすときの読み替えです。
+同梱の DADA キット（v7.0.0、取り込みコミット `6cc5081a`）は Google Antigravity App 向けです。工程、開発文書、`tools/` の点検スクリプトは、Cursor でも同じものを使います。このファイルは、Cursor（エディタとクラウドエージェント）とモデル Grok で動かすときの読み替えです。
 
 ルール本文とスキル定義の正本は `.agents/AGENTS.md` と `.agents/skills/` です。ここには写しません。`.agents/` は書き換えません。
 
@@ -67,7 +67,7 @@ Cursor は、`.cursor/environment.json` の `install` で `.cursor/install.sh` �
 
 | 正本の場所 | 正本に書いてあること | Cursor / Grok では |
 | :--- | :--- | :--- |
-| `.agents/AGENTS.md` 第3節③ | サブエージェント起動ツール `invoke_subagent` がある Antigravity App / CLI は方式A。Antigravity IDE は、承認ゲート型なら方式B、自律型なら方式C | ツール名 `invoke_subagent` は使いません。Cursor がサブエージェントを起動できるときは方式A（ツール自動）です。起動できないチャットでは、承認ゲート型は方式B（マサが新しいチャットを開く）、自律型は方式C（同一チャットで `docs/process/last_phase_summary.md` を書き、承認済み文書だけを読み直す）です。製品名が曖昧なときは、サブエージェントを起動できるかどうかだけで決めます。 |
+| `.agents/AGENTS.md` 第2節 3・`docs/guidelines/antigravity_adapter.md` | サブエージェント起動ツール `invoke_subagent` がある Antigravity App / CLI は方式A。Antigravity IDE は、承認ゲート型なら方式B、自律型なら方式C（v7 で Antigravity 固有機能は `antigravity_adapter.md` に分離） | ツール名 `invoke_subagent` は使いません。Cursor がサブエージェントを起動できるときは方式A（ツール自動）です。起動できないチャットでは、承認ゲート型は方式B（マサが新しいチャットを開く）、自律型は方式C（同一チャットで `docs/process/last_phase_summary.md` を書き、承認済み文書だけを読み直す）です。製品名が曖昧なときは、サブエージェントを起動できるかどうかだけで決めます。 |
 | `.agents/skills/context-reset/SKILL.md` の Step 2 と方式A/B/C | 上と同じ三方式。方式Aの起動名は `invoke_subagent` | 方式Aで渡してよいのは、ペルソナスキルのパス、`docs/process/last_phase_summary.md` を読む指示、承認済み文書のパス、出力先、マサが明示した指示の原文です。チャットの要約は渡しません。 |
 | `.agents/skills/dada-process/SKILL.md` の「フェーズ実行の方式」 | 環境表が Antigravity App / CLI / IDE だけ | 表の製品名は、上の方式A/B/Cに読み替えます。進行表示の「ツール自動/人間作成」は、サブエージェントを起動できるとき「ツール自動」、できないとき「人間作成」です。 |
 | `.agents/skills/asdoq-reviewer/SKILL.md` の `/swarm` | Antigravity の `/swarm`、ワーカーの思考レベル `high`、他ツールでは `invoke_subagent` か特性の順次切り替え | `/swarm` というコマンドはありません。明示がないときは、重点 2〜4 特性を一つのチャットで順に読みます。マサが並列を明示したときだけ、特性ごとにサブエージェントを分けるか、同じチャットで C1〜C6 を順に適用します。深さは Grok の high 以上です。明示なしの並列起動はしません。 |
@@ -77,12 +77,14 @@ Cursor は、`.cursor/environment.json` の `install` で `.cursor/install.sh` �
 | `.agents/skills/dada-process/SKILL.md` の見出し「標準開発ワークフロー」、`.agents/skills/architect/SKILL.md` の「ワークフロー」 | 工程の名前、および Prompt Chaining などの設計パターン | Antigravity の Workflow 画面やワークフローファイルではありません。工程と設計パターンの説明として、書いたとおりに読みます。リポジトリ内に Antigravity 用のワークフロー定義ファイルはありません。 |
 | 上流 README のコツ10（`.agents/` にはスラッシュコマンドの定義が無い） | `/goal`、`/grill-me`、`/swarm` | `/goal` は送りません。承認ゲート型はゲートで止まります。自律型は起動文で指示します。`/grill-me` は「最初に、要求の壁打ちをするので手伝ってください」です。`/swarm` は上の行のとおりです。 |
 
-`gemini-decision-1` と `--decision1` は、`.agents/AGENTS.md` 第2節・第7節、`asdoq-reviewer`、`dada-process` のレビュー手順、`requirements-reviewer`、`test-reviewer`、`architecture-reviewer` に出てきます。どれもチャットモデルの指定ではありません。第5節のまま実行します。
+`gemini-decision-1` と `--decision1` は、`.agents/AGENTS.md` 第1節・第7節、`asdoq-reviewer`、`dada-process` のレビュー手順、`requirements-reviewer`、`test-reviewer`、`architecture-reviewer` に出てきます。どれもチャットモデルの指定ではありません。第5節のまま実行します。
 
 ## 5. ツールは共通のまま
 
 `tools/` は変更しません。Cursor からも、これまでと同じコマンドを実行します。クラウドエージェントでは、上の自動準備のあと `python` を使います。まだ `python` が無いエディタでは `python3` で同じスクリプトを起動します。
 
+- 統合機械検証: `python tools/dada_verify.py --summary`
+- 比較ベンチマーク: `python tools/dada_benchmark.py --summary`
 - 文書と実装の形式チェック: `python tools/dada_check.py all --summary`
 - Phase 4 の報告書チェック: `python tools/dada_check.py report --summary`
 - ASDoQ の機械検査: `python tools/asdoq_lint.py --input <対象.md> --profile <sw105|swp6|sw205|general>`
@@ -124,7 +126,7 @@ Cursor は、`.cursor/environment.json` の `install` で `.cursor/install.sh` �
 
 承認ゲート型では、生成役はマサの明示の承認（「承認します」「OK」「次へ進んで」）があるまで、次のフェーズへ進みません。質問や部分的な同意は承認ではありません。
 
-自律型では、起動文の「DADAプロセス自律型で進めてください」を、Phase 1〜4 の承認の事前委譲とします。毎フェーズの新しい承認は待たず、`.agents/AGENTS.md` 第10.3節の自律ゲートを満たしたときだけ次へ進みます。
+自律型では、起動文の「DADAプロセス自律型で進めてください」を、Phase 1〜4 の承認の事前委譲とします。毎フェーズの新しい承認は待たず、`.agents/AGENTS.md` 第6節の自律ゲートを満たしたときだけ次へ進みます。
 
 プルリクエストを作るところまでは生成役が行ってよく、マージは承認ゲート型でも自律型でもマサが行います。エージェントはマージしません。
 
